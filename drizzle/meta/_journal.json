@@ -8,6 +8,13 @@
       "when": 1765812806653,
       "tag": "0000_smiling_iron_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766656517740,
+      "tag": "0001_spotty_bushwacker",
+      "breakpoints": true
     }
   ]
 }
