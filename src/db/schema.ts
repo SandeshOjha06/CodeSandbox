@@ -62,3 +62,16 @@ export const verificationToken = pgTable(
     }),
   })
 )
+
+
+export const playground = pgTable("playground", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("userId").notNull().references(()=> user.id, {onDelete: "cascade"}),
+
+  title: text("title").notNull(),
+  language: text("language").notNull(),
+  code: text("code").notNull(),
+
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})

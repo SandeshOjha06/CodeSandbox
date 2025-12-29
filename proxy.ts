@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const publicRoutes = ["dashboard","/", "/auth/signin", "/auth/signup"];
+const publicRoutes = ["/", "/auth/signin", "/auth/signup"];
 const apiAuthPrefix = "/api/auth";
 
 export default async function proxy(req: NextRequest) {
