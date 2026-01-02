@@ -2,7 +2,6 @@
 
 import { authOptions } from "@/auth"
 import { playground } from "@/src/db/schema"
-import { error } from "console"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { db } from "@/src/db"
@@ -29,6 +28,8 @@ export default async function addPlayground(){
         title: `Untitled Playground ${nxt}`,
         language: "javascript",
     }).returning()
+
+
 
     redirect(`/dashboard/${newPlayground.id}`)
 }
