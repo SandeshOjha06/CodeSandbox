@@ -5,6 +5,15 @@ import { playground } from "@/src/db/schema"
 import { eq, desc } from "drizzle-orm"
 import SidebarList from "./sidebar-list"
 
+/**
+ * Render the sidebar showing the current user's playgrounds.
+ *
+ * Fetches the authenticated session and, if a user is present, queries that user's playgrounds
+ * ordered by creation time (newest first) and renders them in the sidebar. Returns `null`
+ * when there is no authenticated user.
+ *
+ * @returns The sidebar JSX element displaying the user's playgrounds, or `null` when the user is not authenticated.
+ */
 export default async function Sidebar() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return null

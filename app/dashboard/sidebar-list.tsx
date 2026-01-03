@@ -3,6 +3,12 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+/**
+ * Renders a sidebar list of playgrounds with navigation links and highlights the current route.
+ *
+ * @param playgrounds - Array of playground objects (each should have `id`, optional `title`, and optional `language`) used to build the list
+ * @returns The sidebar React element containing either a "No code history yet" message or a list of links to `/dashboard/{id}`
+ */
 export default function SidebarList({ playgrounds }: { playgrounds: any[] }) {
   const pathname = usePathname()
 

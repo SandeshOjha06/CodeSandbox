@@ -4,6 +4,12 @@ import { startTransition, useEffect, useRef, useState, useTransition } from "rea
 import { updatePlayground } from "../actions"
 import { Save } from "lucide-react"
 
+/**
+ * Renders an editor UI for a playground with an editable title and a code editor that autosaves edits after a short debounce.
+ *
+ * @param playground - Playground data containing `id`, initial `code`, and `title`
+ * @returns The editor's JSX element
+ */
 export default function Editor({ playground }: { playground: any }) {
   const [code, setCode] = useState(playground.code ?? "")
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
