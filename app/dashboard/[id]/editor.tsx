@@ -1,40 +1,104 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import updatePlayground from "../actions"
+import { startTransition, useEffect, useRef, useState, useTransition } from "react"
+import { updatePlayground } from "../actions"
+import { Save } from "lucide-react"
 
 export default function Editor({ playground }: { playground: any }) {
   const [code, setCode] = useState(playground.code ?? "")
-  const [isPending, startTransition] = useTransition()
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
 
-  function save() {
-    startTransition(() => {
-      updatePlayground(playground.id, { code })
+  const [isPending, startTransition] = useTransition()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const [title, setTitle] = useState(playground.title ?? "")
+
+  //debounced autosave
+  useEffect(() => {
+    if (code === playground.code) return
+
+    setStatus("saving")
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      startTransition(async () => {
+        await updatePlayground({
+          id: playground.id,
+          code,
+        })
+        setStatus("saved")
+      })
+    }, 900)
+  }, [code, playground.id, playground.code, startTransition])
+  
+  function manualSave() {
+    setStatus("saving")
+  
+    startTransition(async () => {
+      await updatePlayground({
+        id: playground.id,
+        code,
+      })
+      setStatus("saved")
     })
   }
 
-  return (
-    <div className="flex h-full flex-col gap-4">
-      <h1 className="text-xl font-semibold text-gray-200">
-        {playground.title}
-      </h1>
+  function saveTitle(){
+    if(title === playground.title) return;
 
+    startTransition(async() => {
+      await updatePlayground({
+        id: playground.id,
+        title: title.trim() || "Untitled"
+      })
+      setStatus("saved")
+    }) 
+
+
+  }
+  
+   return (
+    <div className="flex h-full flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={saveTitle}
+          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+          className="
+            bg-transparent
+            text-lg font-semibold
+            text-gray-200
+            outline-none
+            border-b border-transparent
+            focus:border-blue-600
+            max-w-md
+          "
+        />
+
+        <span className="text-xs text-gray-400">
+          {status === "saving" && "Saving…"}
+          {status === "saved" && "Saved"}
+        </span>
+      </div>
+
+      {/* Editor */}
       <textarea
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        className="flex-1 resize-none rounded bg-[#1e1e1e] p-4 font-mono text-sm text-gray-200 outline-none"
+        className="
+          flex-1 resize-none rounded-md
+          bg-[#1e1e1e] p-4
+          font-mono text-sm text-gray-200
+          outline-none
+          focus:ring-1 focus:ring-blue-600
+        "
         placeholder="// Start coding..."
       />
-
-      <div className="flex items-center gap-3">
-        <button
-          onClick={save}
-          disabled={isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
-        >
-          {isPending ? "Saving..." : "Save"}
-        </button>
-      </div>
     </div>
   )
 }
