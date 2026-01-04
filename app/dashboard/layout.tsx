@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/auth"
 import Sidebar from "./sidebar"
 import NewProjectButton from "./new-project-btn"
+import KeyboardShortcuts from "./keyboard-shortcuts"
 
 export default async function DashboardLayout({
   children,
@@ -16,6 +17,7 @@ export default async function DashboardLayout({
 
   return (
   <div className="flex h-screen bg-[#121212] text-gray-200">
+    <KeyboardShortcuts />
     <aside className="w-64 border-r border-gray-800">
       <Sidebar />
     </aside>

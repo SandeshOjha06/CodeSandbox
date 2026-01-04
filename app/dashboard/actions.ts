@@ -65,3 +65,21 @@ export async function updatePlayground({
       )
     )
 }
+
+export async function deletePlayground(id:string){
+    const session = await getServerSession(authOptions)
+    if(!session?.user?.id){
+        throw new Error("Unauthorized")
+    }
+
+    await db
+    .delete(playground)
+    .where(
+        and(
+            eq(playground.id,id),
+            eq(playground.userId,session.user.id)
+        )
+    )
+
+    redirect("/dashboard")
+}

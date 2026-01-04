@@ -4,6 +4,7 @@ import { db } from "@/src/db"
 import { playground } from "@/src/db/schema"
 import { eq, desc } from "drizzle-orm"
 import SidebarList from "./sidebar-list"
+import NewProjectButton from "./new-project-btn"
 
 export default async function Sidebar() {
   const session = await getServerSession(authOptions)
@@ -22,6 +23,9 @@ export default async function Sidebar() {
           Playgrounds
         </h2>
       </div>
+       <div className="px-3 py-3">
+      <NewProjectButton />
+    </div>
 
       <SidebarList playgrounds={playgrounds} />
     </div>

@@ -5,6 +5,7 @@ import { db } from "@/src/db"
 import { playground } from "@/src/db/schema"
 import {eq} from "drizzle-orm" 
 import Editor from "./editor"
+import DeleteButton from "./delete-btn"
 
 export default async function PlaygroundPage({
   params,
@@ -27,7 +28,22 @@ export default async function PlaygroundPage({
     if(!pg) notFound()
     if(pg.userId != session.user.id) notFound()
 
-    return(
-       <Editor playground={pg} />
-    )
+   
+  return (
+    <div className="flex h-full flex-col gap-6">
+      
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-gray-200">
+         
+        </h1>
+
+        <DeleteButton id={pg.id} />
+      </div>
+
+      {/* EDITOR */}
+      <Editor playground={pg} />
+
+    </div>
+  )
 }
