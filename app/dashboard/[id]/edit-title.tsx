@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect,useRef,useState,useTransition } from "react"
-import updatePlayground from "../actions"
+import { updatePlayground } from "../actions"
 
 export default function EditableTitle({id,initialTitle}:{
     id: string,
