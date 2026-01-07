@@ -18,13 +18,13 @@ export const user = pgTable("user", {
 export const account = pgTable(
   "account",
   {
-    userId: uuid("userId")
+    userId: uuid("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
 
     type: text("type").notNull(),
     provider: text("provider").notNull(),
-    providerAccountId: text("providerAccountId").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
 
     refresh_token: text("refresh_token"),
     access_token: text("access_token"),
@@ -40,6 +40,8 @@ export const account = pgTable(
     }),
   })
 )
+
+
 
 export const session = pgTable("session", {
   sessionToken: text("sessionToken").primaryKey(),
@@ -71,6 +73,9 @@ export const playground = pgTable("playground", {
   title: text("title").notNull(),
   language: text("language").notNull(),
   code: text("code").notNull(),
+
+  files: text("files").default('{}'),
+  activeFileId: text("active_file_id"),
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

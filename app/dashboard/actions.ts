@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { db } from "@/src/db"
 import {eq, and} from "drizzle-orm"
+import { FileMap } from "@/types/files"
+
 
 export default async function addPlayground(){
     const session = await getServerSession(authOptions)
@@ -36,13 +38,17 @@ export default async function addPlayground(){
 export async function updatePlayground({
   id,
   title,
-  code,
-  language,
+  files,
+  activeFileId,
+  // code,
+  // language,
 }: {
   id: string
   title?: string
-  code?: string
-  language?: string
+  files?: FileMap
+  activeFileId: string | null
+  // code?: string
+  // language?: string
 }) {
   const session = await getServerSession(authOptions)
 
@@ -54,8 +60,10 @@ export async function updatePlayground({
     .update(playground)
     .set({
       ...(title !== undefined && { title }),
-      ...(code !== undefined && { code }),
-      ...(language !== undefined && { language }),
+      // ...(code !== undefined && { code }),
+      // ...(language !== undefined && { language }),
+      ...(files !== undefined && {files: JSON.stringify(files)}),
+      ...(activeFileId !==undefined && { activeFileId }),
       updatedAt: new Date(),
     })
     .where(
