@@ -5,6 +5,7 @@ import { authOptions } from "@/auth"
 import Sidebar from "./sidebar"
 import NewProjectButton from "./new-project-btn"
 import KeyboardShortcuts from "./keyboard-shortcuts"
+// import FileExplorer from "./[id]/file-explorer"
 
 export default async function DashboardLayout({
   children,
