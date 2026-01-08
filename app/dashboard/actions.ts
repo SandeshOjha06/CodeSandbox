@@ -29,6 +29,9 @@ export default async function addPlayground(){
         userId: session.user.id,
         title: `Untitled Playground ${nxt}`,
         language: "javascript",
+        code: "",
+        files: {},
+        activeFileId: null
     }).returning()
 
 
