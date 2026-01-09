@@ -20,15 +20,23 @@ export default function EditorLayout({
 
   const activeFile = fileExplorer.activeFile
 
-  return (
+ return (
     <div className="flex h-full gap-0">
-      <FileExplorer playground={playground} playgroundId={playgroundId} />
+      {/* FILE EXPLORER (Left Sidebar) */}
+      {/* ✅ Pass the fileExplorer hook down */}
+      <FileExplorer 
+        fileExplorer={fileExplorer}
+      />
 
+      {/* MAIN CONTENT (Right Side) */}
       <div className="flex-1 flex flex-col gap-6 overflow-hidden">
+        {/* Header: Title + Delete Button */}
         <div className="flex items-center justify-between">
           <EditableTitle id={playgroundId} initialTitle={playground.title} />
           <DeleteButton id={playgroundId} />
         </div>
+
+        {/* Editor with active file */}
         {activeFile ? (
           <Editor 
             activeFile={activeFile}

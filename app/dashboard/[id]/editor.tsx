@@ -1,22 +1,35 @@
-"use client"
+'use client'
 
-import { startTransition, useEffect, useRef, useState, useTransition } from "react"
-import { updatePlayground } from "../actions"
+import { useState, useEffect, useRef, useTransition } from "react"
 import { toast } from "sonner"
 import Editor from "@monaco-editor/react"
+import { File } from "@/types/files"
 
-export default function CodeEditor({ playground }: { playground: any }) {
-  const [code, setCode] = useState(playground.code ?? "")
+interface CodeEditorProps {
+  activeFile: File
+  onContentChange: (newContent: string) => void
+}
+
+export default function CodeEditor({ 
+  activeFile, 
+  onContentChange 
+}: CodeEditorProps) {
+  const [code, setCode] = useState(activeFile.content ?? "")
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
-
+  const [language, setLanguage] = useState(activeFile.language ?? "javascript")
+  
   const [, startTransition] = useTransition()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const [language, setLanguage] = useState(playground.language ?? "javascript")
-
-  // Debounced autosave
+  
   useEffect(() => {
-    if (code === playground.code) return
+    setCode(activeFile.content ?? "")
+    setLanguage(activeFile.language ?? "javascript")
+  }, [activeFile.id])
+
+  // Auto-save when code changes
+  useEffect(() => {
+    if (code === activeFile.content) return
 
     setStatus("saving")
 
@@ -26,39 +39,33 @@ export default function CodeEditor({ playground }: { playground: any }) {
 
     timeoutRef.current = setTimeout(() => {
       startTransition(async () => {
-        await updatePlayground({
-          id: playground.id,
-          code,
-        })
+        onContentChange(code)
         setStatus("saved")
-        // Reset status after 2 seconds
         setTimeout(() => setStatus("idle"), 2000)
       })
     }, 900)
-  }, [code, playground.id, playground.code, startTransition])
+  }, [code, activeFile.id, onContentChange])
 
-  function changeLanguage(next:string){
-    if(next === language) return
-
+  function changeLanguage(next: string) {
+    if (next === language) return
     setLanguage(next)
-
-    startTransition(() => {
-      updatePlayground({
-        id: playground.id,
-        language: next,
-      })
-    })
+    // Update language if needed
   }
 
- return (
+  return (
     <div className="flex h-full flex-col gap-3">
       {/* HEADER */}
       <div className="flex items-center justify-between">
-        {/* Left: Status */}
-        <span className="text-xs text-gray-400">
-          {status === "saving" && "Saving…"}
-          {status === "saved" && "Saved"}
-        </span>
+        {/* Left: Status + File Name */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">
+            {status === "saving" && "Saving…"}
+            {status === "saved" && "Saved"}
+          </span>
+          <span className="text-sm font-semibold text-gray-300">
+            {activeFile.name}
+          </span>
+        </div>
 
         {/* Right: Language Selector */}
         <select
