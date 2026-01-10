@@ -6,6 +6,7 @@ import Editor from './editor'
 import FileExplorer from './file-explorer'
 import EditableTitle from './edit-title'
 import DeleteButton from './delete-btn'
+import EditorContainer from './editor-container'
 
 interface EditorLayoutProps {
   playground: PlaygroundWithFiles
@@ -22,8 +23,6 @@ export default function EditorLayout({
 
  return (
     <div className="flex h-full gap-0">
-      {/* FILE EXPLORER (Left Sidebar) */}
-      {/* ✅ Pass the fileExplorer hook down */}
       <FileExplorer 
         fileExplorer={fileExplorer}
       />
@@ -36,15 +35,14 @@ export default function EditorLayout({
           <DeleteButton id={playgroundId} />
         </div>
 
-        {/* Editor with active file */}
         {activeFile ? (
-          <Editor 
+          <EditorContainer
             activeFile={activeFile}
-            onContentChange={(newContent) => 
+            onContentChange={(newContent) =>
               fileExplorer.updateFileContent(activeFile.id, newContent)
             }
           />
-        ) : (
+        )  : (
           <div className="flex-1 flex items-center justify-center text-gray-500">
             <p>No file selected. Create or select a file to start coding.</p>
           </div>

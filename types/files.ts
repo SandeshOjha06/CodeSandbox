@@ -1,5 +1,3 @@
-// types/files.ts
-
 export interface File {
   id: string;
   name: string;
