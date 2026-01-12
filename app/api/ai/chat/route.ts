@@ -9,7 +9,7 @@ export async function POST(req: Request) {
 ${codeContext ? `Current code:\n${codeContext}` : ''}`
 
 const result = await streamText({
-  model: groq('llama-3.1-70b-versatile'),
+ model: groq('llama-3.1-8b-instant'),
   system: systemPrompt,
   messages,
 })
