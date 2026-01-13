@@ -12,33 +12,46 @@ interface FileExplorerProps {
     deleteFile: (id: string) => void
     createFile: (name: string, language: string) => void
   }
+  collapsed?: boolean
+  onToggleCollapse?: () => void
+  onRequestCreateFile?: () => void
 }
 
-export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
-  // STATE: Dialog for creating new file
+export default function FileExplorer({ fileExplorer, collapsed = false, onToggleCollapse, onRequestCreateFile }: FileExplorerProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [newFileName, setNewFileName] = useState('')
   const [newFileLanguage, setNewFileLanguage] = useState('javascript')
 
-  // HELPER: Get icon based on language
-  function getFileIcon(language: string) {
-    switch(language) {
-      case 'javascript':
-        return <FileJson size={16} className="text-yellow-500" />
-      case 'typescript':
-        return <FileCode size={16} className="text-blue-500" />
-      case 'css':
-        return <FileCode size={16} className="text-purple-500" />
-      case 'html':
-        return <FileText size={16} className="text-orange-500" />
-      case 'python':
-        return <FileCode size={16} className="text-green-500" />
-      default:
-        return <FileText size={16} className="text-gray-500" />
+  // support being controlled by parent (slide-in panel)
+  const handleOpenCreate = () => {
+    if (typeof (arguments as any) !== 'undefined') {
+      // noop for type safety
+    }
+
+    if (typeof onRequestCreateFile === 'function') {
+      onRequestCreateFile()
+    } else {
+      setShowCreateDialog(true)
     }
   }
 
-  // HANDLER: Create new file
+  function getFileIcon(language: string) {
+    switch (language) {
+      case 'javascript':
+        return <FileJson size={16} className="text-yellow-400" />
+      case 'typescript':
+        return <FileCode size={16} className="text-blue-400" />
+      case 'css':
+        return <FileCode size={16} className="text-purple-400" />
+      case 'html':
+        return <FileText size={16} className="text-orange-400" />
+      case 'python':
+        return <FileCode size={16} className="text-green-400" />
+      default:
+        return <FileText size={16} className="text-gray-400" />
+    }
+  }
+
   const handleCreateFile = () => {
     if (!newFileName.trim()) {
       alert('Please enter a file name')
@@ -46,36 +59,63 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
     }
 
     fileExplorer.createFile(newFileName, newFileLanguage)
-
-    // Reset dialog
     setNewFileName('')
     setNewFileLanguage('javascript')
     setShowCreateDialog(false)
   }
 
-  // RENDER
+  // collapsed UI
+  if (collapsed) {
+    return (
+      <div className="w-12 bg-[var(--card)] border-r border-[var(--border)] flex flex-col h-full items-center py-2">
+        <button
+          onClick={onToggleCollapse}
+          aria-label="Expand files"
+          className="mb-3 p-2 rounded hover:bg-[var(--popover-hover)] transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button onClick={handleOpenCreate} aria-label="New file" className="p-2 rounded hover:bg-[var(--popover-hover)] transition-colors">
+          <Plus size={16} />
+        </button>
+
+        <div className="mt-auto mb-2 text-[var(--muted-foreground)] text-xs">Files</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="w-64 bg-[#1e1e1e] border-r border-gray-700 flex flex-col h-full">
-      {/* ===== HEADER ===== */}
-      <div className="border-b border-gray-700 p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-          Files
-        </h2>
+    <div className="w-64 bg-[var(--card)] border-r border-[var(--border)] flex flex-col h-full transition-width duration-200">
+      {/* HEADER */}
+      <div className="border-b border-[var(--border)] px-4 py-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted-foreground)]">
+            Files
+          </h2>
+          <button onClick={onToggleCollapse} aria-label="Collapse files" className="p-1 rounded hover:bg-[var(--popover-hover)] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* ===== CREATE FILE BUTTON ===== */}
+      {/* CREATE FILE BUTTON */}
       <button
-        onClick={() => setShowCreateDialog(true)}
-        className="m-3 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm flex items-center gap-2 transition font-medium"
+        onClick={handleOpenCreate}
+        className={"m-3 bg-[var(--primary)] hover:opacity-95 text-[var(--primary-foreground)] px-4 py-2 rounded-md text-sm flex items-center gap-2 transition duration-150 font-medium shadow-sm hover:shadow-md"}
       >
         <Plus size={16} />
         New File
       </button>
 
-      {/* ===== FILE LIST ===== */}
-      <div className="flex-1 overflow-y-auto px-2 py-1">
+      {/* FILE LIST */}
+      <div className="flex-1 overflow-y-auto px-2 py-2">
         {Object.values(fileExplorer.files).length === 0 ? (
-          <div className="text-gray-500 text-xs p-4 text-center">
+          <div className="text-[var(--muted-foreground)] text-xs p-4 text-center">
             No files yet. Create one!
           </div>
         ) : (
@@ -84,24 +124,22 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
               key={file.id}
               onClick={() => fileExplorer.selectFile(file.id)}
               className={`
-                px-3 py-2 cursor-pointer flex items-center gap-2 text-sm
-                transition rounded-md border-l-2 group
+                px-3 py-2.5 cursor-pointer flex items-center gap-2.5 text-sm
+                transition-all duration-150 rounded-md border-l-2 group
                 ${
                   fileExplorer.activeFileId === file.id
-                    ? 'bg-blue-600/20 border-blue-500 text-blue-300 font-medium'
-                    : 'border-transparent text-gray-300 hover:bg-gray-800/50'
+                    ? 'bg-[var(--primary)] bg-opacity-20 border-[var(--primary)] text-[var(--card-foreground)] font-medium ring-1 ring-[var(--primary)] ring-opacity-30'
+                    : 'border-transparent text-[var(--muted-foreground)] hover:bg-[var(--popover)] hover:text-[var(--card-foreground)]'
                 }
               `}
             >
               {/* File icon */}
-              <div className="flex-shrink-0">
-                {getFileIcon(file.language)}
-              </div>
+              <div className="flex-shrink-0">{getFileIcon(file.language)}</div>
 
               {/* File name */}
               <span className="flex-1 truncate">{file.name}</span>
 
-              {/* Delete button (appears on hover) */}
+              {/* Delete button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -109,7 +147,10 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
                     fileExplorer.deleteFile(file.id)
                   }
                 }}
-                className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition flex-shrink-0"
+                className="
+                  opacity-0 group-hover:opacity-100 text-[var(--danger)] hover:text-[var(--danger-foreground)]
+                  transition-opacity duration-150 flex-shrink-0
+                "
               >
                 <Trash2 size={14} />
               </button>
@@ -118,11 +159,11 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
         )}
       </div>
 
-      {/* ===== CREATE FILE DIALOG ===== */}
+      {/* CREATE FILE DIALOG (fallback) */}
       {showCreateDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#2a2a2a] p-6 rounded-lg w-96 shadow-lg border border-gray-700">
-            <h3 className="text-lg font-semibold mb-4 text-white">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-[var(--card)] p-6 rounded-lg w-96 shadow-2xl border border-[var(--border)]">
+            <h3 className="text-lg font-semibold mb-4 text-[var(--card-foreground)]">
               Create New File
             </h3>
 
@@ -133,7 +174,11 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
               value={newFileName}
               onChange={(e) => setNewFileName(e.target.value)}
               autoFocus
-              className="w-full bg-[#1e1e1e] text-white px-3 py-2 rounded mb-4 outline-none border border-gray-700 focus:border-blue-500 transition"
+              className="
+                w-full bg-[var(--background)] text-[var(--card-foreground)] px-3 py-2.5 rounded-md mb-4
+                outline-none border border-[var(--border)] focus:border-[var(--primary)]
+                transition-colors duration-150 placeholder-[var(--muted-foreground)]
+              "
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleCreateFile()
                 if (e.key === 'Escape') setShowCreateDialog(false)
@@ -144,7 +189,11 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
             <select
               value={newFileLanguage}
               onChange={(e) => setNewFileLanguage(e.target.value)}
-              className="w-full bg-[#1e1e1e] text-white px-3 py-2 rounded mb-4 outline-none border border-gray-700 focus:border-blue-500 transition"
+              className="
+                w-full bg-[var(--background)] text-[var(--card-foreground)] px-3 py-2.5 rounded-md mb-6
+                outline-none border border-[var(--border)] focus:border-[var(--primary)]
+                transition-colors duration-150
+              "
             >
               <option value="javascript">JavaScript</option>
               <option value="typescript">TypeScript</option>
@@ -154,16 +203,22 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
             </select>
 
             {/* Action buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={handleCreateFile}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition"
+                className="
+                  flex-1 bg-[var(--primary)] hover:bg-[var(--primary-foreground)] text-[var(--primary-foreground)] px-4 py-2.5
+                  rounded-md text-sm font-medium transition-colors duration-150
+                "
               >
                 Create
               </button>
               <button
                 onClick={() => setShowCreateDialog(false)}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm transition"
+                className="
+                  flex-1 bg-[var(--card)] hover:bg-[var(--popover)] text-[var(--card-foreground)] px-4 py-2.5
+                  rounded-md text-sm transition-colors duration-150
+                "
               >
                 Cancel
               </button>
