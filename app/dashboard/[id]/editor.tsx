@@ -1,23 +1,24 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from "react"
-import { toast } from "sonner"
 import Editor from "@monaco-editor/react"
 import { File } from "@/types/files"
-import { Play } from 'lucide-react'
+import { Play, Sparkles } from 'lucide-react'
 
 interface CodeEditorProps {
   activeFile: File
   onContentChange: (newContent: string) => void
   onRun?: () => void
   isRunning?: boolean
+  onGenerateCode?: () => void
 }
 
 export default function CodeEditor({ 
   activeFile, 
-  onContentChange ,
+  onContentChange,
   onRun,
-  isRunning
+  isRunning,
+  onGenerateCode
 }: CodeEditorProps) {
   const [code, setCode] = useState(activeFile.content ?? "")
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
@@ -25,7 +26,6 @@ export default function CodeEditor({
   
   const [, startTransition] = useTransition()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-
   
   useEffect(() => {
     setCode(activeFile.content ?? "")
@@ -54,70 +54,98 @@ export default function CodeEditor({
   function changeLanguage(next: string) {
     if (next === language) return
     setLanguage(next)
-    // Update language if needed
   }
 
- return (
-  <div className="flex h-full flex-col gap-3">
-    {/* HEADER */}
-    <div className="flex items-center justify-between">
-      {/* Left: Status + File Name */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-400">
-          {status === "saving" && "Saving…"}
-          {status === "saved" && "Saved"}
-        </span>
-        <span className="text-sm font-semibold text-gray-300">
-          {activeFile.name}
-        </span>
-      </div>
+  return (
+    <div className="flex h-full flex-col gap-3">
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        {/* Left: Status + File Name */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[#8B949E]">
+            {status === "saving" && "Saving…"}
+            {status === "saved" && "Saved"}
+          </span>
+          <span className="text-sm font-semibold text-[#E6EBED]">
+            {activeFile.name}
+          </span>
+        </div>
 
-      {/* Right: Buttons */}
-      <div className="flex gap-2">
-        {/* Run Button */}
-        {onRun && (
-          <button
-            onClick={onRun}
-            disabled={isRunning}
-            className="flex items-center gap-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-1.5 rounded text-xs font-medium transition"
+        {/* Right: Action Buttons */}
+        <div className="flex gap-2">
+          {/* Generate Code Button */}
+          {onGenerateCode && (
+            <button
+              onClick={onGenerateCode}
+              className="
+                flex items-center gap-1.5 bg-[#FB8500] hover:bg-[#E89500]
+                text-white px-3 py-1.5 rounded-md text-xs font-medium
+                transition-colors duration-150
+              "
+              title="Generate code with AI"
+            >
+              <Sparkles size={14} />
+              Generate
+            </button>
+          )}
+
+          {/* Run Button */}
+          {onRun && (
+            <button
+              onClick={onRun}
+              disabled={isRunning}
+              className="
+                flex items-center gap-1 bg-[#3FB950] hover:bg-[#2DA043]
+                disabled:opacity-50 text-white px-3 py-1.5 rounded-md
+                text-xs font-medium transition-colors duration-150
+              "
+              title="Run code"
+            >
+              <Play size={14} />
+              {isRunning ? 'Running...' : 'Run'}
+            </button>
+          )}
+
+          {/* Language Selector */}
+          <select
+            value={language}
+            onChange={(e) => changeLanguage(e.target.value)}
+            className="
+              bg-[#1e1e1e] text-sm text-[#E6EBED] rounded-md px-3 py-1.5
+              border border-[#30363D] focus:border-[#58A6FF]
+              transition-colors duration-150 cursor-pointer
+            "
+            title="Select programming language"
           >
-            <Play size={14} />
-            {isRunning ? 'Running...' : 'Run'}
-          </button>
-        )}
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="python">Python</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+          </select>
+        </div>
+      </div>
 
-        {/* Language Selector */}
-        <select
-          value={language}
-          onChange={(e) => changeLanguage(e.target.value)}
-          className="bg-[#1e1e1e] text-sm text-gray-200 rounded px-2 py-1"
-        >
-          <option value="javascript">JavaScript</option>
-          <option value="typescript">TypeScript</option>
-          <option value="python">Python</option>
-          <option value="html">HTML</option>
-          <option value="css">CSS</option>
-        </select>
+      {/* EDITOR */}
+      <div className="flex-1 overflow-hidden rounded-md border border-[#30363D]">
+        <Editor
+          height="100%"
+          language={language}
+          theme="vs-dark"
+          value={code}
+          onChange={(value) => setCode(value ?? "")}
+          options={{
+            fontSize: 14,
+            minimap: { enabled: false },
+            wordWrap: "on",
+            smoothScrolling: true,
+            cursorSmoothCaretAnimation: "on",
+            padding: { top: 16, bottom: 16 },
+            fontFamily: 'Fira Code, Monaco, monospace',
+            lineHeight: 1.6,
+          }}
+        />
       </div>
     </div>
-
-    {/* EDITOR */}
-    <div className="flex-1 overflow-hidden rounded-md">
-      <Editor
-        height="100%"
-        language={language}
-        theme="vs-dark"
-        value={code}
-        onChange={(value) => setCode(value ?? "")}
-        options={{
-          fontSize: 14,
-          minimap: { enabled: false },
-          wordWrap: "on",
-          smoothScrolling: true,
-          cursorSmoothCaretAnimation: "on",
-        }}
-      />
-    </div>
-  </div>
-)
+  )
 }
