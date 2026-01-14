@@ -31,6 +31,8 @@ export default function GenerateCodeDialog({
     setError(null)
 
     try {
+      console.log('Sending to API:', { prompt: prompt.trim(), language })
+
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,16 +42,27 @@ export default function GenerateCodeDialog({
         }),
       })
 
+      console.log('Response status:', response.status)
+
       if (!response.ok) {
-        throw new Error('Failed to generate code')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate code')
       }
 
       const { code } = await response.json()
 
+      console.log('Received code:', code)
+
+      // Call onGenerate with the code
       onGenerate(code)
+
+      // Reset form
       setPrompt('')
+      setLanguage(currentLanguage)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+      console.error('Generation error:', errorMsg)
+      setError(errorMsg)
     } finally {
       setIsLoading(false)
     }

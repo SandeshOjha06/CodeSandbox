@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Editor from './editor'
 import OutputPanel from './output-panel'
 import ResizableDivider from './resizable-divider'
@@ -32,6 +32,13 @@ export default function EditorContainer({
     // Close dialog
     setShowGenerateDialog(false)
   }
+  useEffect(() => {
+  console.log('EditorContainer: activeFile changed', activeFile.id, activeFile.content.substring(0, 50))
+}, [activeFile])
+
+useEffect(() => {
+  console.log('EditorContainer: editorHeight changed', editorHeight)
+}, [editorHeight])
 
   return (
     <>

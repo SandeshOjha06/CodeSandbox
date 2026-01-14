@@ -13,28 +13,46 @@ export async function POST(req: Request) {
     }
 
     try {
-        const systemPrompt = `You are an expert ${language} developer. Generate clean, production-ready code based on the user's request.
+        const systemPrompt = `You are an expert ${language} developer. Generate ONLY clean code, nothing else.
 
-Requirements:
-- Write only the code, no explanations or markdown backticks
-- Include comments for complex logic
-- Follow best practices and conventions for ${language}
-- Make the code reusable and well-structured
-- If it's a function, make it complete and ready to use`
+IMPORTANT RULES:
+- Output ONLY the code itself
+- NO markdown code blocks
+- NO backticks
+- NO language identifiers like \`\`\`javascript
+- NO explanations or comments outside the code
+- NO "Here's the code:" or similar text
+- Write comments INSIDE the code if needed
+- Make the code complete and ready to run`
 
-const { text } = await generateText({
-    model: groq('llama-3.1-8b-instant'),
-    system: systemPrompt,
-    prompt,
-})
+        const { text } = await generateText({
+            model: groq('llama-3.1-8b-instant'),
+            system: systemPrompt,
+            prompt,
+            temperature: 0.7,
+            maxTokens: 1000,
+        })
 
-return Response.json({ code: text })
+        let cleanCode = text.trim()
+
+        cleanCode = cleanCode.replace(/^```[\s\S]*?\n/, '')
+        cleanCode = cleanCode.replace(/\n```[\s\S]*?$/, '')
+
+        cleanCode = cleanCode.replace(/^`+|`+$/g, '')
+
+        cleanCode = cleanCode.replace(/^(javascript|typescript|python|html|css|jsx|tsx)\n/i, '')
+
+        cleanCode = cleanCode.trim()
+
+        console.log('Cleaned code:', cleanCode)
+
+        return Response.json({ code: text })
     } catch (error) {
         console.error("Process failed: ", error);
         return Response.json(
-            {error: "Failed to generate code"},
-            {status: 500},
+            { error: "Failed to generate code" },
+            { status: 500 },
         )
-        
+
     }
 }
