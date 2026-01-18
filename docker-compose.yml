@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  code-executor:
+    build: .
+    image: code-executor:latest
+    container_name: code-executor
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - executor-network
+
+networks:
+  executor-network:
+    driver: bridge
