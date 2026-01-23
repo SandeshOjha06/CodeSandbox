@@ -1,76 +1,71 @@
 'use client'
 
-import { useRef, useState, useCallback } from "react"
+import { useState, useCallback } from 'react'
 
-interface Log{
-    type: 'log' | 'error' | 'warn' | 'info'
-    message: string
-}
-
-interface ExecutionState {
-    logs: Log[]
-    error: string | null
-    time: number | null
-    isRunning: boolean
+interface Log {
+  type: 'log' | 'error' | 'warn' | 'info'
+  message: string
 }
 
 export function useCodeExecution() {
-    const workerRef = useRef<Worker | null>(null)
-    const [state, setState] = useState<ExecutionState>({
-        logs: [],
-        error: null,
-        time: null,
-        isRunning: false,
-    })
+  const [logs, setLogs] = useState<Log[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [time, setTime] = useState<number | null>(null)
+  const [isRunning, setIsRunning] = useState(false)
 
-    const initWorker = useCallback(() => {
-        if(!workerRef.current && typeof window !== 'undefined'){
-           try {
-             workerRef.current = new Worker(
-                new URL('@/src/workers/code-executor.worker.ts', import.meta.url),
-          { type: 'module' }
-             )
+  const run = useCallback(async (code: string, language: string = 'node') => {
+    setIsRunning(true)
+    setLogs([])
+    setError(null)
+    setTime(null)
 
-             workerRef.current.onmessage = (e) => {
-                setState({
-                    logs: e.data.logs || [],
-                    error: e.data.error || null,
-                    time: e.data.executionTime || null,
-                    isRunning: false,
-                }
-                )
+    try {
+      const response = await fetch('/api/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language }),
+      })
 
-                
-             }
-            
-        workerRef.current.onerror = (err) => {
-          setState({
-            logs: [],
-            error: err.message,
-            time: null,
-            isRunning: false,
-          })
-             }
-           } catch (err) {
-            console.error("Failed to initialize worker: ", err);
-            
-           }
-        }
-    }, [])
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Execution failed')
+      }
 
+      const result = await response.json()
 
-    const run = useCallback((code: string, language: string = 'javascript') => {
-    initWorker()
-    setState({ logs: [], error: null, time: null, isRunning: true })
+      if (result.stdout) {
+        const output = result.stdout.trim().split('\n')
+        setLogs(
+          output.map((line: string) => ({
+            type: 'log' as const,
+            message: line || '(empty line)',
+          }))
+        )
+      }
 
-    if (workerRef.current) {
-      workerRef.current.postMessage({ code, language })
+      if (result.stderr) {
+        setError(result.stderr)
+      }
+
+      if (!result.stdout && !result.stderr) {
+        setLogs([{ type: 'log' as const, message: '(no output)' }])
+      }
+
+      setTime(result.time)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+      setError(errorMsg)
+      console.error('Execution error:', errorMsg)
+    } finally {
+      setIsRunning(false)
     }
-  }, [initWorker])
-
-  const clear = useCallback(() => {
-    setState({ logs: [], error: null, time: null, isRunning: false })
   }, [])
 
-  return { ...state, run, clear }
+  const clear = useCallback(() => {
+    setLogs([])
+    setError(null)
+    setTime(null)
+  }, [])
+
+  return { logs, error, time, isRunning, run, clear }
 }

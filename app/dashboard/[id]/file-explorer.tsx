@@ -22,7 +22,7 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
 
   // HELPER: Get icon based on language
   function getFileIcon(language: string) {
-    switch(language) {
+    switch (language) {
       case 'javascript':
         return <FileJson size={16} className="text-yellow-500" />
       case 'typescript':
@@ -86,10 +86,9 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
               className={`
                 px-3 py-2 cursor-pointer flex items-center gap-2 text-sm
                 transition rounded-md border-l-2 group
-                ${
-                  fileExplorer.activeFileId === file.id
-                    ? 'bg-blue-600/20 border-blue-500 text-blue-300 font-medium'
-                    : 'border-transparent text-gray-300 hover:bg-gray-800/50'
+                ${fileExplorer.activeFileId === file.id
+                  ? 'bg-blue-600/20 border-blue-500 text-blue-300 font-medium'
+                  : 'border-transparent text-gray-300 hover:bg-gray-800/50'
                 }
               `}
             >
@@ -148,8 +147,8 @@ export default function FileExplorer({ fileExplorer }: FileExplorerProps) {
             >
               <option value="javascript">JavaScript</option>
               <option value="typescript">TypeScript</option>
-              <option value="css">CSS</option>
-              <option value="html">HTML</option>
+              <option value="node">Node.js</option>
+              <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
             </select>
 
