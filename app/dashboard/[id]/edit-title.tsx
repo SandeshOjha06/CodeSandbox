@@ -1,55 +1,56 @@
 "use client"
-
-import { useEffect,useRef,useState,useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { updatePlayground } from "../actions"
 
-export default function EditableTitle({id,initialTitle}:{
-    id: string,
-    initialTitle: string
-}){
-    const [title, setTitle] = useState(initialTitle)
-    const [editing, setEditing] = useState(false)
-    const [isPending, startTransition] = useTransition()
-    const inputRef = useRef<HTMLInputElement>(null)
+export default function EditableTitle({
+  id,
+  initialTitle,
+}: {
+  id: string
+  initialTitle: string
+}) {
+  const [title, setTitle] = useState(initialTitle)
+  const [editing, setEditing] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const inputRef = useRef<HTMLInputElement>(null)
 
-    useEffect(() => {
-        if(editing){
-            inputRef.current?.focus()
-            inputRef.current?.select()
-        }
-    },[editing])
-
-    function save(){
-        setEditing(false)
-
-        if(title.trim() === "" || title === initialTitle) return
-
-        startTransition(() => {
-            updatePlayground({
-                id,
-                title: title.trim()
-            })
-        })
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus()
+      inputRef.current?.select()
     }
+  }, [editing])
 
-    function cancel(){
-        setTitle(initialTitle)
-        setEditing(false)
-    }
+  function save() {
+    setEditing(false)
+    if (title.trim() === "" || title === initialTitle) return
 
-    if(!editing){
-        return(
-             <h1
+    startTransition(() => {
+      updatePlayground({
+        id,
+        title: title.trim()
+      })
+    })
+  }
+
+  function cancel() {
+    setTitle(initialTitle)
+    setEditing(false)
+  }
+
+  if (!editing) {
+    return (
+      <h1
         onClick={() => setEditing(true)}
-        className="cursor-text text-xl font-semibold text-gray-200 hover:text-white"
+        className="text-2xl font-bold text-gray-100 hover:text-gray-200 cursor-text transition"
         title="Click to rename"
       >
         {title}
       </h1>
-        )
-    }
+    )
+  }
 
-   return (
+  return (
     <input
       ref={inputRef}
       value={title}
@@ -60,11 +61,10 @@ export default function EditableTitle({id,initialTitle}:{
         if (e.key === "Escape") cancel()
       }}
       className="
-        rounded bg-[#1e1e1e] px-2 py-1
-        text-xl font-semibold text-gray-200
-        outline-none ring-1 ring-blue-500
+        text-2xl font-bold text-gray-100 bg-[#1e1e1e]
+        border border-gray-600 focus:border-gray-500 rounded px-2 py-1
+        outline-none transition
       "
     />
   )
-
 }

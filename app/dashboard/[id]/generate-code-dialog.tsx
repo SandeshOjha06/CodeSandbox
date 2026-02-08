@@ -53,12 +53,11 @@ export default function GenerateCodeDialog({
 
       console.log('Received code:', code)
 
-      // Call onGenerate with the code
       onGenerate(code)
 
-      // Reset form
       setPrompt('')
       setLanguage(currentLanguage)
+      onClose()
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Unknown error'
       console.error('Generation error:', errorMsg)
@@ -139,10 +138,7 @@ export default function GenerateCodeDialog({
               disabled={isLoading}
             >
               <option value="javascript">JavaScript</option>
-              <option value="typescript">TypeScript</option>
               <option value="python">Python</option>
-              <option value="html">HTML</option>
-              <option value="css">CSS</option>
             </select>
           </div>
 
@@ -152,13 +148,6 @@ export default function GenerateCodeDialog({
               <p className="text-[#FF7B72] text-sm">{error}</p>
             </div>
           )}
-
-          {/* Info Tip */}
-          <div className="bg-[#58A6FF] bg-opacity-10 border border-[#58A6FF] border-opacity-30 rounded-md p-3">
-            <p className="text-[#58A6FF] text-xs leading-relaxed">
-              💡 <strong>Tip:</strong> Be specific in your prompt for better results. Include details about what the code should do, expected inputs/outputs, and any special requirements.
-            </p>
-          </div>
         </div>
 
         {/* FOOTER */}

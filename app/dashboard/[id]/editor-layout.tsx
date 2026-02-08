@@ -10,6 +10,7 @@ import DeleteButton from './delete-btn'
 import EditorContainer from './editor-container'
 import AIChat from './ai-chat'
 import AIToggle from './ai-toggle'
+import UserMenu from './user-menu'
 
 interface EditorLayoutProps {
   playground: PlaygroundWithFiles
@@ -30,18 +31,22 @@ export default function EditorLayout({
       <FileExplorer fileExplorer={fileExplorer} />
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col gap-6 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      <div className="flex-1 flex flex-col gap-0 overflow-hidden">
+        {/* HEADER */}
+        <div className="border-b border-gray-800 bg-[#0a0a0a] px-8 py-4 flex items-center justify-between">
+          {/* Left: Title */}
           <EditableTitle id={playgroundId} initialTitle={playground.title} />
-          <div className="flex gap-2 items-center">
+
+          {/* Right: Actions */}
+          <div className="flex gap-3 items-center">
             <AIToggle isOpen={showAI} onClick={() => setShowAI(!showAI)} />
             <DeleteButton id={playgroundId} />
+            <UserMenu />
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 flex gap-4 overflow-hidden">
+        {/* EDITOR & OUTPUT */}
+        <div className="flex-1 flex gap-0 overflow-hidden">
           {/* Editor + Output */}
           {activeFile ? (
             <EditorContainer
@@ -56,7 +61,7 @@ export default function EditorLayout({
             </div>
           )}
 
-          {/* AI Chat */}
+          {/* AI Chat Sidebar */}
           <AIChat
             activeFileContent={activeFile?.content || ''}
             isOpen={showAI}

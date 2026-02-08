@@ -24,16 +24,22 @@ export default function OutputPanel({
   onRun,
   onClear,
 }: OutputPanelProps) {
+  const handleClear = () => {
+    onClear()
+    // console.log("Cleared");
+    
+  }
+
   return (
-    <div className="flex h-full flex-col bg-[#1e1e1e] border-t border-gray-700">
+    <div className="flex h-full flex-col bg-[#1e1e1e] border-t border-gray-800">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-700 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3 bg-[#0a0a0a]">
         <div className="flex items-center gap-2">
-          <h3 className="text-xs font-semibold uppercase text-gray-400">
+          <h3 className="text-xs font-semibold uppercase text-gray-500">
             Output
           </h3>
           {time !== null && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-600">
               ({time.toFixed(1)}ms)
             </span>
           )}
@@ -43,15 +49,16 @@ export default function OutputPanel({
           <button
             onClick={onRun}
             disabled={isRunning}
-            className="flex items-center gap-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-1.5 rounded text-xs font-medium transition"
+            className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-100 px-3 py-1.5 rounded text-xs font-medium transition"
           >
             <Play size={14} />
             {isRunning ? 'Running...' : 'Run'}
           </button>
 
           <button
-            onClick={onClear}
-            className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-xs transition"
+            onClick={handleClear}
+            className="flex items-center gap-1 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-300 px-3 py-1.5 rounded text-xs transition"
+            title="Clear output"
           >
             <Trash2 size={14} />
           </button>
@@ -61,7 +68,7 @@ export default function OutputPanel({
       {/* Output Area */}
       <div className="flex-1 overflow-auto p-4 font-mono text-sm space-y-1">
         {logs.length === 0 && !error && (
-          <div className="text-gray-500 text-xs">
+          <div className="text-gray-600 text-xs">
             {isRunning ? 'Running code...' : 'Click Run to execute code'}
           </div>
         )}
@@ -77,7 +84,7 @@ export default function OutputPanel({
                 : 'text-gray-300'
             }
           >
-            <span className="text-gray-600 mr-2">›</span>
+            <span className="text-gray-700 mr-2">›</span>
             {log.message}
           </div>
         ))}

@@ -27,10 +27,12 @@ export default function CodeEditor({
   const [, startTransition] = useTransition()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
+  // Update code when activeFile changes
   useEffect(() => {
+    console.log('Setting code from activeFile:', activeFile.content.substring(0, 50))
     setCode(activeFile.content ?? "")
     setLanguage(activeFile.language ?? "javascript")
-  }, [activeFile.id])
+  }, [activeFile.id, activeFile.content])
 
   // Auto-save when code changes
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function CodeEditor({
 
     timeoutRef.current = setTimeout(() => {
       startTransition(async () => {
+        console.log('Saving code:', code.substring(0, 50))
         onContentChange(code)
         setStatus("saved")
         setTimeout(() => setStatus("idle"), 2000)
@@ -78,8 +81,8 @@ export default function CodeEditor({
             <button
               onClick={onGenerateCode}
               className="
-                flex items-center gap-1.5 bg-[#FB8500] hover:bg-[#E89500]
-                text-white px-3 py-1.5 rounded-md text-xs font-medium
+                flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600
+                text-gray-100 px-3 py-1.5 rounded-md text-xs font-medium
                 transition-colors duration-150
               "
               title="Generate code with AI"
@@ -95,8 +98,8 @@ export default function CodeEditor({
               onClick={onRun}
               disabled={isRunning}
               className="
-                flex items-center gap-1 bg-[#3FB950] hover:bg-[#2DA043]
-                disabled:opacity-50 text-white px-3 py-1.5 rounded-md
+                flex items-center gap-1 bg-gray-700 hover:bg-gray-600
+                disabled:opacity-50 text-gray-100 px-3 py-1.5 rounded-md
                 text-xs font-medium transition-colors duration-150
               "
               title="Run code"
@@ -111,29 +114,31 @@ export default function CodeEditor({
             value={language}
             onChange={(e) => changeLanguage(e.target.value)}
             className="
-              bg-[#1e1e1e] text-sm text-[#E6EBED] rounded-md px-3 py-1.5
-              border border-[#30363D] focus:border-[#58A6FF]
+              bg-[#2a2a2a] text-sm text-gray-200 rounded-md px-3 py-1.5
+              border border-gray-700 focus:border-gray-600
               transition-colors duration-150 cursor-pointer
             "
             title="Select programming language"
           >
+            <option value="node">Node.js</option>
             <option value="javascript">JavaScript</option>
             <option value="typescript">TypeScript</option>
             <option value="python">Python</option>
-            <option value="html">HTML</option>
-            <option value="css">CSS</option>
           </select>
         </div>
       </div>
 
       {/* EDITOR */}
-      <div className="flex-1 overflow-hidden rounded-md border border-[#30363D]">
+      <div className="flex-1 overflow-hidden rounded-md border border-gray-800">
         <Editor
           height="100%"
           language={language}
           theme="vs-dark"
           value={code}
-          onChange={(value) => setCode(value ?? "")}
+          onChange={(value) => {
+            console.log('Editor onChange:', value?.substring(0, 50))
+            setCode(value ?? "")
+          }}
           options={{
             fontSize: 14,
             minimap: { enabled: false },
