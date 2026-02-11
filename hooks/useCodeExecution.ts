@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useCallback } from 'react'
 
 interface Log {
@@ -13,7 +12,7 @@ export function useCodeExecution() {
   const [time, setTime] = useState<number | null>(null)
   const [isRunning, setIsRunning] = useState(false)
 
-  const run = useCallback(async (code: string, language: string = 'node') => {
+  const run = useCallback(async (code: string, language: string, input?: string) => {
     setIsRunning(true)
     setLogs([])
     setError(null)
@@ -23,7 +22,11 @@ export function useCodeExecution() {
       const response = await fetch('/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language }),
+        body: JSON.stringify({ 
+          code, 
+          language,
+          input: input || ''  // ✅ NOW SENDING INPUT TO BACKEND
+        }),
       })
 
       if (!response.ok) {
