@@ -8,9 +8,10 @@ import { Play, Sparkles } from 'lucide-react'
 interface CodeEditorProps {
   activeFile: File
   onContentChange: (newContent: string) => void
-  onRun?: () => void
+  onRun?: (input?: string) => void
   isRunning?: boolean
   onGenerateCode?: () => void
+  skipSaveRef?: React.MutableRefObject<boolean>
 }
 
 export default function CodeEditor({ 
@@ -18,7 +19,8 @@ export default function CodeEditor({
   onContentChange,
   onRun,
   isRunning,
-  onGenerateCode
+  onGenerateCode,
+  skipSaveRef
 }: CodeEditorProps) {
   const [code, setCode] = useState(activeFile.content ?? "")
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
@@ -29,14 +31,25 @@ export default function CodeEditor({
   
   // Update code when activeFile changes
   useEffect(() => {
-    console.log('Setting code from activeFile:', activeFile.content.substring(0, 50))
     setCode(activeFile.content ?? "")
     setLanguage(activeFile.language ?? "javascript")
   }, [activeFile.id, activeFile.content])
 
-  // Auto-save when code changes
+  // Auto-save when code changes (debounced)
   useEffect(() => {
+    // Skip if flag is set (during code generation)
+    if (skipSaveRef?.current) {
+      return
+    }
+
+    // Don't save if code hasn't actually changed
     if (code === activeFile.content) return
+
+    // CRITICAL: Don't save if code contains markdown backticks
+    if (code.includes('```')) {
+      console.warn('⚠️ Code contains markdown - skipping save')
+      return
+    }
 
     setStatus("saving")
 
@@ -46,17 +59,22 @@ export default function CodeEditor({
 
     timeoutRef.current = setTimeout(() => {
       startTransition(async () => {
-        console.log('Saving code:', code.substring(0, 50))
         onContentChange(code)
         setStatus("saved")
         setTimeout(() => setStatus("idle"), 2000)
       })
     }, 900)
-  }, [code, activeFile.id, onContentChange])
+  }, [code, activeFile.id, onContentChange, skipSaveRef])
 
   function changeLanguage(next: string) {
     if (next === language) return
     setLanguage(next)
+  }
+
+  const handleRun = () => {
+    if (onRun) {
+      onRun()  // Run without input
+    }
   }
 
   return (
@@ -65,11 +83,11 @@ export default function CodeEditor({
       <div className="flex items-center justify-between">
         {/* Left: Status + File Name */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#8B949E]">
+          <span className="text-xs text-gray-600">
             {status === "saving" && "Saving…"}
             {status === "saved" && "Saved"}
           </span>
-          <span className="text-sm font-semibold text-[#E6EBED]">
+          <span className="text-sm font-semibold text-gray-200">
             {activeFile.name}
           </span>
         </div>
@@ -95,7 +113,7 @@ export default function CodeEditor({
           {/* Run Button */}
           {onRun && (
             <button
-              onClick={onRun}
+              onClick={handleRun}
               disabled={isRunning}
               className="
                 flex items-center gap-1 bg-gray-700 hover:bg-gray-600
@@ -136,7 +154,6 @@ export default function CodeEditor({
           theme="vs-dark"
           value={code}
           onChange={(value) => {
-            console.log('Editor onChange:', value?.substring(0, 50))
             setCode(value ?? "")
           }}
           options={{

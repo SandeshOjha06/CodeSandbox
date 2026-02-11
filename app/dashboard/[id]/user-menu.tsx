@@ -19,21 +19,19 @@ export default function UserMenu() {
       {/* Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium transition"
+        className="flex items-center gap-2 px-2 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium transition max-w-xs"
       >
-        <div className="flex items-center gap-2 flex-1">
-          {session.user.image ? (
-            <img
-              src={session.user.image}
-              alt={session.user.name || 'User'}
-              className="w-5 h-5 rounded-full"
-            />
-          ) : (
-            <User size={16} />
-          )}
-          <span className="max-w-xs truncate">{session.user.name || session.user.email}</span>
-        </div>
-        <ChevronDown size={16} className={`transition ${isOpen ? 'rotate-180' : ''}`} />
+        {session.user.image ? (
+          <img
+            src={session.user.image}
+            alt={session.user.name || 'User'}
+            className="w-5 h-5 rounded-full flex-shrink-0"
+          />
+        ) : (
+          <User size={16} className="flex-shrink-0" />
+        )}
+        <span className="truncate text-xs">{session.user.name || session.user.email}</span>
+        <ChevronDown size={14} className={`flex-shrink-0 transition ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Menu */}

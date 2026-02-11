@@ -1,6 +1,5 @@
 'use client'
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Editor from './editor'
 import OutputPanel from './output-panel'
 import ResizableDivider from './resizable-divider'
@@ -20,25 +19,34 @@ export default function EditorContainer({
   const [editorHeight, setEditorHeight] = useState(65)
   const [showGenerateDialog, setShowGenerateDialog] = useState(false)
   const { logs, error, time, isRunning, run, clear } = useCodeExecution()
+  const skipSaveRef = useRef(false)
 
-  const handleRun = () => {
-    run(activeFile.content, activeFile.language)
-  }
+  // add input
+ const handleRun = (input?: string) => {
+  run(activeFile.content, activeFile.language, input)
+}
 
   const handleGenerateCode = (generatedCode: string) => {
-    // Insert generated code into editor
+    // no backticks
+    if (generatedCode.includes('```')) {
+      console.error('Generated code still contains markdown!')
+      return
+    }
+    
+    // Set flag to skip next auto-save
+    skipSaveRef.current = true
+    
+    // insert code
     onContentChange(generatedCode)
+    
+    // Reset flag after a short delay
+    setTimeout(() => {
+      skipSaveRef.current = false
+    }, 100)
     
     // Close dialog
     setShowGenerateDialog(false)
   }
-  useEffect(() => {
-  console.log('EditorContainer: activeFile changed', activeFile.id, activeFile.content.substring(0, 50))
-}, [activeFile])
-
-useEffect(() => {
-  console.log('EditorContainer: editorHeight changed', editorHeight)
-}, [editorHeight])
 
   return (
     <>
@@ -54,6 +62,7 @@ useEffect(() => {
             onRun={handleRun}
             isRunning={isRunning}
             onGenerateCode={() => setShowGenerateDialog(true)}
+            skipSaveRef={skipSaveRef}
           />
         </div>
 

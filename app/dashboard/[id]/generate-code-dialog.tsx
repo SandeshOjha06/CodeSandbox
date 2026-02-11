@@ -49,12 +49,38 @@ export default function GenerateCodeDialog({
         throw new Error(errorData.error || 'Failed to generate code')
       }
 
-      const { code } = await response.json()
+      const data = await response.json()
+      console.log('Received data:', data)
 
-      console.log('Received code:', code)
+      // Extract code from response
+      let generatedCode = ''
+      if (typeof data === 'string') {
+        generatedCode = data
+      } else if (data.code) {
+        generatedCode = data.code
+      } else if (data.content) {
+        generatedCode = data.content
+      }
 
-      onGenerate(code)
+      // Remove markdown code blocks if present
+      if (generatedCode.includes('```')) {
+        // Extract code between ``` markers
+        const match = generatedCode.match(/```(?:\w+)?\n([\s\S]*?)\n```/);
+        if (match && match[1]) {
+          generatedCode = match[1]
+        }
+      }
 
+      console.log('Extracted code:', generatedCode)
+
+      if (!generatedCode) {
+        throw new Error('No code received from API')
+      }
+
+      // Call onGenerate with the code
+      onGenerate(generatedCode)
+
+      // Reset form
       setPrompt('')
       setLanguage(currentLanguage)
       onClose()
@@ -71,12 +97,12 @@ export default function GenerateCodeDialog({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#1C2128] border border-[#30363D] rounded-lg w-96 shadow-2xl">
+      <div className="bg-[#1e1e1e] border border-gray-800 rounded-lg w-96 shadow-2xl">
         {/* HEADER */}
-        <div className="border-b border-[#30363D] px-6 py-4 flex items-center justify-between bg-[#0D1117]">
+        <div className="border-b border-gray-800 px-6 py-4 flex items-center justify-between bg-[#0a0a0a]">
           <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-[#FB8500]" />
-            <h2 className="text-lg font-semibold text-[#E6EBED]">
+            <Sparkles size={18} className="text-gray-400" />
+            <h2 className="text-lg font-semibold text-gray-100">
               Generate Code
             </h2>
           </div>
@@ -84,8 +110,8 @@ export default function GenerateCodeDialog({
             onClick={onClose}
             disabled={isLoading}
             className="
-              p-1 hover:bg-[#30363D] rounded-md transition-colors duration-150
-              text-[#8B949E] disabled:opacity-50 disabled:cursor-not-allowed
+              p-1 hover:bg-gray-800 rounded-md transition-colors duration-150
+              text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
             <X size={18} />
@@ -96,7 +122,7 @@ export default function GenerateCodeDialog({
         <div className="p-6 space-y-4">
           {/* Prompt Input */}
           <div>
-            <label className="block text-sm font-medium text-[#E6EBED] mb-2">
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               What would you like to code?
             </label>
             <textarea
@@ -104,9 +130,9 @@ export default function GenerateCodeDialog({
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g., Create a function that calculates factorial recursively..."
               className="
-                w-full bg-[#0D1117] text-[#E6EBED] px-3 py-2.5 rounded-md
-                outline-none border border-[#30363D] focus:border-[#58A6FF]
-                transition-colors duration-150 placeholder-[#8B949E]
+                w-full bg-[#2a2a2a] text-gray-100 px-3 py-2.5 rounded-md
+                outline-none border border-gray-700 focus:border-gray-600
+                transition-colors duration-150 placeholder-gray-600
                 resize-none h-24 font-mono text-sm
               "
               disabled={isLoading}
@@ -117,47 +143,56 @@ export default function GenerateCodeDialog({
                 }
               }}
             />
-            <p className="text-xs text-[#8B949E] mt-1">
+            <p className="text-xs text-gray-600 mt-1">
               Ctrl+Enter to generate
             </p>
           </div>
 
           {/* Language Selector */}
           <div>
-            <label className="block text-sm font-medium text-[#E6EBED] mb-2">
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               Language
             </label>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               className="
-                w-full bg-[#0D1117] text-[#E6EBED] px-3 py-2.5 rounded-md
-                outline-none border border-[#30363D] focus:border-[#58A6FF]
+                w-full bg-[#2a2a2a] text-gray-100 px-3 py-2.5 rounded-md
+                outline-none border border-gray-700 focus:border-gray-600
                 transition-colors duration-150
               "
               disabled={isLoading}
             >
+              <option value="node">Node.js</option>
               <option value="javascript">JavaScript</option>
+              <option value="typescript">TypeScript</option>
               <option value="python">Python</option>
             </select>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="bg-[#FF7B72] bg-opacity-10 border border-[#FF7B72] border-opacity-30 rounded-md p-3">
-              <p className="text-[#FF7B72] text-sm">{error}</p>
+            <div className="bg-red-900/20 border border-red-700/50 rounded-md p-3">
+              <p className="text-red-400 text-sm">{error}</p>
             </div>
           )}
+
+          {/* Info Tip */}
+          <div className="bg-gray-900/50 border border-gray-700 rounded-md p-3">
+            <p className="text-gray-400 text-xs leading-relaxed">
+              💡 <strong>Tip:</strong> Be specific in your prompt for better results. Include details about what the code should do, expected inputs/outputs, and any special requirements.
+            </p>
+          </div>
         </div>
 
         {/* FOOTER */}
-        <div className="border-t border-[#30363D] px-6 py-4 flex gap-3 bg-[#0D1117]">
+        <div className="border-t border-gray-800 px-6 py-4 flex gap-3 bg-[#0a0a0a]">
           <button
             onClick={onClose}
             disabled={isLoading}
             className="
-              flex-1 bg-[#30363D] hover:bg-[#3D444D] disabled:opacity-50
-              text-[#E6EBED] px-4 py-2.5 rounded-md text-sm font-medium
+              flex-1 bg-gray-800 hover:bg-gray-700 disabled:opacity-50
+              text-gray-200 px-4 py-2.5 rounded-md text-sm font-medium
               transition-colors duration-150 disabled:cursor-not-allowed
             "
           >
@@ -167,8 +202,8 @@ export default function GenerateCodeDialog({
             onClick={handleGenerate}
             disabled={isLoading || !prompt.trim()}
             className="
-              flex-1 bg-[#FB8500] hover:bg-[#E89500] disabled:opacity-50
-              text-white px-4 py-2.5 rounded-md text-sm font-medium
+              flex-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50
+              text-gray-100 px-4 py-2.5 rounded-md text-sm font-medium
               transition-colors duration-150 disabled:cursor-not-allowed
               flex items-center justify-center gap-2
             "
