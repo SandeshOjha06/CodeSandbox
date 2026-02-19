@@ -23,7 +23,7 @@ export default async function PlaygroundPage({
     .where(eq(playground.id, id))
 
   if (!pg) notFound()
-  if (pg.userId !== session.user.id) notFound()
+  if (pg.userId !== (session.user.id as string)) notFound()
 
   const parsed: PlaygroundWithFiles = {
     id: pg.id,

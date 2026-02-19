@@ -3,6 +3,7 @@ export interface File {
   name: string;
   language: string;
   createdAt: Date;
+  updatedAt?: Date;
   content: string;
 }
 
@@ -12,7 +13,7 @@ export interface FileMap {
 
 export interface PlaygroundWithFiles {
   id: string;
-  userId: string;           
+  userId: string;
   title: string;
   activeFileId: string | null;
   files: FileMap;

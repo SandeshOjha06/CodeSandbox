@@ -1,18 +1,20 @@
 import { updatePlayground } from "@/app/dashboard/actions";
-import { FileMap, PlaygroundWithFiles, File } from "@/types/files"; 
+import { FileMap, PlaygroundWithFiles, File } from "@/types/files";
 import { useState, useRef, useCallback } from "react";
 
 export function useFileExplorer(playground: PlaygroundWithFiles, playgroundId: string) {
     const [files, setFiles] = useState<FileMap>(() => {
+        if (!playground.files) return {}
+        if (typeof playground.files === 'object') return playground.files
         try {
-            return JSON.parse(playground.files || '{}')
+            return JSON.parse(playground.files as unknown as string)
         } catch {
             return {}
         }
     })
 
     //track currently open file
-    const [activeFileId, setActiveFileId] = useState<string | null>(  
+    const [activeFileId, setActiveFileId] = useState<string | null>(
         playground.activeFileId || null
     )
 
@@ -55,7 +57,7 @@ export function useFileExplorer(playground: PlaygroundWithFiles, playgroundId: s
         }
 
         const updatedFiles = {
-            ...files,  
+            ...files,
             [fileId]: newFile,
         }
         setFiles(updatedFiles)
@@ -73,13 +75,13 @@ export function useFileExplorer(playground: PlaygroundWithFiles, playgroundId: s
             return
         }
 
-        setActiveFileId(fileId)  
+        setActiveFileId(fileId)
         saveToDatabase(files, fileId)
 
     }, [files, saveToDatabase])
 
     const deleteFile = useCallback((fileId: string) => {
-       
+
         const updatedFiles = { ...files }
         delete updatedFiles[fileId]
 
@@ -91,13 +93,13 @@ export function useFileExplorer(playground: PlaygroundWithFiles, playgroundId: s
         }
 
         setFiles(updatedFiles)
-        setActiveFileId(newActiveId) 
+        setActiveFileId(newActiveId)
 
         saveToDatabase(updatedFiles, newActiveId)
 
     }, [files, activeFileId, saveToDatabase])
 
-    const updateFileContent = useCallback((fileId: string, newContent: string) => {  
+    const updateFileContent = useCallback((fileId: string, newContent: string) => {
         if (!files[fileId]) {
             console.error("File not found")
             return
@@ -125,22 +127,22 @@ export function useFileExplorer(playground: PlaygroundWithFiles, playgroundId: s
     }, [files, activeFileId, saveToDatabase])
 
     const renameFile = useCallback(
-        (fileId: string, newName: string) =>{
-            if(!newName.trim()){
+        (fileId: string, newName: string) => {
+            if (!newName.trim()) {
                 console.error("File name cannot be empty")
                 return
             }
 
-            if(!files[fileId]){
+            if (!files[fileId]) {
                 console.error("File not found: ", fileId);
-                return  
+                return
             }
 
             const nameExists = Object.values(files).some(
                 (file) => file.name === newName && file.id !== fileId
             )
 
-            if(nameExists){
+            if (nameExists) {
                 console.error("File name alredy exists: ", newName);
                 return
             }
@@ -170,7 +172,7 @@ export function useFileExplorer(playground: PlaygroundWithFiles, playgroundId: s
         createFile,
         selectFile,
         deleteFile,
-        updateFileContent,  
+        updateFileContent,
         renameFile,
     }
 }

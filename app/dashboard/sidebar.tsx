@@ -13,7 +13,7 @@ export default async function Sidebar() {
   const playgrounds = await db
     .select()
     .from(playground)
-    .where(eq(playground.userId, session.user.id))
+    .where(eq(playground.userId, session.user.id as string))
     .orderBy(desc(playground.createdAt))
 
   return (
@@ -23,9 +23,9 @@ export default async function Sidebar() {
           Playgrounds
         </h2>
       </div>
-       <div className="px-3 py-3">
-      <NewProjectButton />
-    </div>
+      <div className="px-3 py-3">
+        <NewProjectButton />
+      </div>
 
       <SidebarList playgrounds={playgrounds} />
     </div>

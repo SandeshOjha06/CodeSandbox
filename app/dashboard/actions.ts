@@ -18,14 +18,14 @@ export default async function addPlayground() {
   const existing = await db
     .select()
     .from(playground)
-    .where(eq(playground.userId, session.user.id))
+    .where(eq(playground.userId, session.user.id as string))
 
   const nxt = existing.length + 1
 
   const [newPlayground] = await db
     .insert(playground)
     .values({
-      userId: session.user.id,
+      userId: session.user.id as string,
       title: `Untitled Playground ${nxt}`,
       language: "javascript",
       code: "",
@@ -77,7 +77,7 @@ export async function updatePlayground({
     .where(
       and(
         eq(playground.id, id),
-        eq(playground.userId, session.user.id)
+        eq(playground.userId, session.user.id as string)
       )
     )
     .returning()
@@ -97,7 +97,7 @@ export async function deletePlayground(id: string) {
     .where(
       and(
         eq(playground.id, id),
-        eq(playground.userId, session.user.id)
+        eq(playground.userId, session.user.id as string)
       )
     )
 
