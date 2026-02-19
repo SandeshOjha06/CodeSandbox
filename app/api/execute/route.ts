@@ -13,17 +13,19 @@ interface ExecutionRequest {
   input?: string
 }
 
-// Detect if Docker is available on this host
+// Check once at startup whether Docker is available
+let dockerAvailable: boolean | null = null
 function isDockerAvailable(): boolean {
+  if (dockerAvailable !== null) return dockerAvailable
   try {
-    execSync('docker info --format json', { stdio: 'ignore', timeout: 3000 })
-    return true
+    execSync('docker info', { stdio: 'ignore', timeout: 3000 })
+    dockerAvailable = true
   } catch {
-    return false
+    dockerAvailable = false
   }
+  console.log(`[executor] Docker ${dockerAvailable ? 'available' : 'not available, using direct execution'}`)
+  return dockerAvailable
 }
-
-const DOCKER_AVAILABLE = isDockerAvailable()
 
 export async function POST(request: Request) {
   try {
@@ -34,9 +36,9 @@ export async function POST(request: Request) {
     }
 
     if (language === 'node' || language === 'javascript') {
-      return executeNode(code, input)
+      return execute(code, input, 'js')
     } else if (language === 'python') {
-      return executePython(code, input)
+      return execute(code, input, 'py')
     } else {
       return Response.json({ error: `Language ${language} not supported` }, { status: 400 })
     }
@@ -46,59 +48,11 @@ export async function POST(request: Request) {
   }
 }
 
-function spawnProcess(cmd: string, args: string[]): ReturnType<typeof spawn> {
-  return spawn(cmd, args)
-}
-
-function runWithProcess(
-  process: ReturnType<typeof spawn>,
-  input: string | undefined,
-  startTime: number,
-  filePath: string
-): Promise<Response> {
-  return new Promise((resolve) => {
-    let stdout = ''
-    let stderr = ''
-    let timedOut = false
-
-    const timeout = setTimeout(() => {
-      timedOut = true
-      process.kill()
-    }, TIMEOUT)
-
-    process.stdout?.on('data', (data) => {
-      stdout += data.toString()
-      if (stdout.length > MAX_OUTPUT) stdout = stdout.slice(0, MAX_OUTPUT)
-    })
-
-    process.stderr?.on('data', (data) => {
-      stderr += data.toString()
-      if (stderr.length > MAX_OUTPUT) stderr = stderr.slice(0, MAX_OUTPUT)
-    })
-
-    process.on('close', async (code) => {
-      clearTimeout(timeout)
-      const time = Date.now() - startTime
-      try { await unlink(filePath) } catch { }
-
-      resolve(Response.json({
-        stdout,
-        stderr: timedOut ? 'Execution timeout (10s limit)' : stderr,
-        time,
-        status: timedOut ? 'timeout' : code === 0 ? 'success' : 'error',
-      }))
-    })
-
-    if (input) process.stdin?.write(input)
-    process.stdin?.end()
-  })
-}
-
-function executeNode(code: string, input?: string): Promise<Response> {
+function execute(code: string, input: string | undefined, ext: 'js' | 'py'): Promise<Response> {
   return new Promise((resolve) => {
     const startTime = Date.now()
     const fileId = randomBytes(8).toString('hex')
-    const fileName = `code-${fileId}.js`
+    const fileName = `code-${fileId}.${ext}`
     const filePath = join(SANDBOX_DIR, fileName)
 
       ; (async () => {
@@ -106,62 +60,69 @@ function executeNode(code: string, input?: string): Promise<Response> {
           await mkdir(SANDBOX_DIR, { recursive: true })
           await writeFile(filePath, code, 'utf-8')
 
-          const proc = DOCKER_AVAILABLE
-            ? spawnProcess('docker', [
+          let proc: ReturnType<typeof spawn>
+
+          if (isDockerAvailable()) {
+            // Docker mode: run in isolated container
+            const image = ext === 'js' ? 'code-executor:latest' : 'python:3.11-alpine'
+            const cmd = ext === 'js' ? 'node' : 'python'
+            proc = spawn('docker', [
               'run', '--rm', '-i',
               '-v', `${SANDBOX_DIR}:/sandbox`,
               '--network', 'none',
               '--memory', '128m',
               '--cpus', '0.5',
-              'code-executor:latest',
-              'node', `/sandbox/${fileName}`,
+              image, cmd, `/sandbox/${fileName}`,
             ])
-            : spawnProcess('node', [filePath])
+          } else {
+            // Direct mode: run on host (for Render / serverless)
+            const cmd = ext === 'js' ? 'node' : getPythonBin()
+            proc = spawn(cmd, [filePath])
+          }
 
-          resolve(await runWithProcess(proc, input, startTime, filePath))
+          let stdout = ''
+          let stderr = ''
+          let timedOut = false
+
+          const timeout = setTimeout(() => {
+            timedOut = true
+            proc.kill()
+          }, TIMEOUT)
+
+          proc.stdout?.on('data', (data) => {
+            stdout += data.toString()
+            if (stdout.length > MAX_OUTPUT) stdout = stdout.slice(0, MAX_OUTPUT)
+          })
+
+          proc.stderr?.on('data', (data) => {
+            stderr += data.toString()
+            if (stderr.length > MAX_OUTPUT) stderr = stderr.slice(0, MAX_OUTPUT)
+          })
+
+          proc.on('close', async (exitCode) => {
+            clearTimeout(timeout)
+            const time = Date.now() - startTime
+            try { await unlink(filePath) } catch { }
+
+            resolve(Response.json({
+              stdout,
+              stderr: timedOut ? 'Execution timeout (10s limit)' : stderr,
+              time,
+              status: timedOut ? 'timeout' : exitCode === 0 ? 'success' : 'error',
+            }))
+          })
+
+          if (input) proc.stdin?.write(input)
+          proc.stdin?.end()
         } catch (error) {
           const time = Date.now() - startTime
           const message = error instanceof Error ? error.message : 'Unknown error'
           try { await unlink(filePath) } catch { }
-          resolve(Response.json({ stdout: '', stderr: message.slice(0, MAX_OUTPUT), time, status: 'error' }, { status: 500 }))
-        }
-      })()
-  })
-}
 
-function executePython(code: string, input?: string): Promise<Response> {
-  return new Promise((resolve) => {
-    const startTime = Date.now()
-    const fileId = randomBytes(8).toString('hex')
-    const fileName = `code-${fileId}.py`
-    const filePath = join(SANDBOX_DIR, fileName)
-
-      ; (async () => {
-        try {
-          await mkdir(SANDBOX_DIR, { recursive: true })
-          await writeFile(filePath, code, 'utf-8')
-
-          // Try python3, then python as fallback
-          const pythonBin = DOCKER_AVAILABLE ? null : getPythonBin()
-
-          const proc = DOCKER_AVAILABLE
-            ? spawnProcess('docker', [
-              'run', '--rm', '-i',
-              '-v', `${SANDBOX_DIR}:/sandbox`,
-              '--network', 'none',
-              '--memory', '128m',
-              '--cpus', '0.5',
-              'python:3.11-alpine',
-              'python', `/sandbox/${fileName}`,
-            ])
-            : spawnProcess(pythonBin!, [filePath])
-
-          resolve(await runWithProcess(proc, input, startTime, filePath))
-        } catch (error) {
-          const time = Date.now() - startTime
-          const message = error instanceof Error ? error.message : 'Unknown error'
-          try { await unlink(filePath) } catch { }
-          resolve(Response.json({ stdout: '', stderr: message.slice(0, MAX_OUTPUT), time, status: 'error' }, { status: 500 }))
+          resolve(Response.json(
+            { stdout: '', stderr: message.slice(0, MAX_OUTPUT), time, status: 'error' },
+            { status: 500 }
+          ))
         }
       })()
   })
