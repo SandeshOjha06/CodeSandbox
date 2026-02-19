@@ -37,7 +37,7 @@ function capture(type: 'log' | 'error' | 'warn' | 'info', args: any[]) {
     })
         .join(' ')
 
-    logs.push({ type, message : msg })
+    logs.push({ type, message: msg })
 
     if (type === 'error') originalError(...args)
     else if (type === 'warn') originalWarn(...args)
@@ -59,7 +59,7 @@ self.onmessage = (e: MessageEvent<ExecutionMessage>) => {
 
     try {
         if (language != 'javascript' && language !== 'typescript') {
-            throw new Error(`${language} is not supproted`)
+            throw new Error(`${language} is not supported`)
         }
 
         new Function(code)()
@@ -68,14 +68,14 @@ self.onmessage = (e: MessageEvent<ExecutionMessage>) => {
             status: 'success',
             logs,
             executionTime: performance.now() - start,
-            error: null
+            error: undefined
         } as ExecutionResult)
     } catch (error) {
         self.postMessage({
             status: 'error',
             logs,
             executionTime: performance.now() - start,
-            error: (err as Error).message
-         } as ExecutionResult)
+            error: (error as Error).message
+        } as ExecutionResult)
     }
 }
