@@ -11,6 +11,16 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Placeholder env vars for build (Next.js needs these to compile)
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ENV NEXTAUTH_SECRET="build-time-placeholder-secret"
+ENV NEXTAUTH_URL="http://localhost:3000"
+ENV GOOGLE_ID="placeholder"
+ENV GOOGLE_SECRET="placeholder"
+ENV GITHUB_ID="placeholder"
+ENV GITHUB_SECRET="placeholder"
+
 RUN npm run build
 
 # ===== Stage 3: Runner =====
