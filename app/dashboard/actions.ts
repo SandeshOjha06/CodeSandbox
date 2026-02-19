@@ -1,4 +1,3 @@
-
 "use server"
 
 import { authOptions } from "@/auth"
@@ -93,7 +92,7 @@ export async function deletePlayground(id: string) {
     throw new Error("Unauthorized")
   }
 
-  const result = await db
+  await db
     .delete(playground)
     .where(
       and(
@@ -101,7 +100,6 @@ export async function deletePlayground(id: string) {
         eq(playground.userId, session.user.id)
       )
     )
-    .returning()
 
-  return result
+  redirect("/dashboard")
 }

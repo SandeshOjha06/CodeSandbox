@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Code Editor",
-  description: "Online code editor",
+  title: "CodeSandbox",
+  description: "Online code sanbox for prototyping",
 }
 
 export default function RootLayout({
@@ -29,12 +29,12 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>{children}
           <Toaster
-          theme="dark"
-          position="bottom-right"
-          richColors
-        />
+            theme="dark"
+            position="bottom-right"
+            richColors
+          />
         </Providers>
-         
+
       </body>
     </html>
   )

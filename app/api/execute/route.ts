@@ -1,14 +1,11 @@
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import { spawn } from 'child_process'
 import { writeFile, unlink, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { randomBytes } from 'crypto'
 
-const execPromise = promisify(exec)
-
 const SANDBOX_DIR = '/tmp/code-sandbox'
 const TIMEOUT = 10000 // 10 seconds
-const MAX_OUTPUT = 10000 // 10KB 
+const MAX_OUTPUT = 10000 // 10KB
 
 interface ExecutionRequest {
   code: string
@@ -53,111 +50,189 @@ export async function POST(request: Request) {
   }
 }
 
-async function executeNode(code: string, input?: string): Promise<Response> {
-  const startTime = Date.now()
-  const fileId = randomBytes(8).toString('hex')
-  const fileName = `code-${fileId}.js`
-  const filePath = join(SANDBOX_DIR, fileName)
+function executeNode(code: string, input?: string): Promise<Response> {
+  return new Promise((resolve) => {
+    const startTime = Date.now()
+    const fileId = randomBytes(8).toString('hex')
+    const fileName = `code-${fileId}.js`
+    const filePath = join(SANDBOX_DIR, fileName)
 
-  try {
-    // Create sandbox directory
-    await mkdir(SANDBOX_DIR, { recursive: true })
+      ; (async () => {
+        try {
+          // Create sandbox directory
+          await mkdir(SANDBOX_DIR, { recursive: true })
+          // Write code to file
+          await writeFile(filePath, code, 'utf-8')
 
-    // Write code to file
-    await writeFile(filePath, code, 'utf-8')
+          // Use spawn to properly pipe stdin to Docker
+          const docker = spawn('docker', [
+            'run',
+            '--rm',
+            '-i',
+            '-v',
+            `${SANDBOX_DIR}:/sandbox`,
+            'code-executor:latest',
+            'node',
+            `/sandbox/${fileName}`,
+          ])
 
-    // Execute with timeout
-    const { stdout, stderr } = await execPromise(
-      `docker run --rm -v ${SANDBOX_DIR}:/sandbox code-executor:latest node /sandbox/${fileName}`,
-      { 
-        timeout: TIMEOUT,
-        maxBuffer: MAX_OUTPUT,
-        ...(input && { input })
-      }
-    )
+          let stdout = ''
+          let stderr = ''
+          let timedOut = false
 
-    const time = Date.now() - startTime
+          const timeout = setTimeout(() => {
+            timedOut = true
+            docker.kill()
+          }, TIMEOUT)
 
-    return Response.json({
-      stdout: stdout.slice(0, MAX_OUTPUT),
-      stderr: stderr.slice(0, MAX_OUTPUT),
-      time,
-      status: 'success',
-    })
-  } catch (error) {
-    const time = Date.now() - startTime
-    let stderr = ''
+          docker.stdout?.on('data', (data) => {
+            stdout += data.toString()
+            if (stdout.length > MAX_OUTPUT) {
+              stdout = stdout.slice(0, MAX_OUTPUT)
+            }
+          })
 
-    if (error instanceof Error) {
-      if (error.message.includes('timeout')) {
-        stderr = 'Execution timeout (10s limit)'
-      } else {
-        stderr = error.message
-      }
-    }
+          docker.stderr?.on('data', (data) => {
+            stderr += data.toString()
+            if (stderr.length > MAX_OUTPUT) {
+              stderr = stderr.slice(0, MAX_OUTPUT)
+            }
+          })
 
-    return Response.json({
-      stdout: '',
-      stderr: stderr.slice(0, MAX_OUTPUT),
-      time,
-      status: 'timeout' in (error || {}) ? 'timeout' : 'error',
-    })
-  } finally {
-    // Cleanup
-    try {
-      await unlink(filePath)
-    } catch {}
-  }
+          docker.on('close', async (code) => {
+            clearTimeout(timeout)
+            const time = Date.now() - startTime
+
+            try {
+              await unlink(filePath)
+            } catch { }
+
+            resolve(
+              Response.json({
+                stdout,
+                stderr: timedOut ? 'Execution timeout (10s limit)' : stderr,
+                time,
+                status: timedOut ? 'timeout' : code === 0 ? 'success' : 'error',
+              })
+            )
+          })
+
+          // Write input to stdin
+          if (input) {
+            docker.stdin?.write(input)
+          }
+          docker.stdin?.end()
+        } catch (error) {
+          const time = Date.now() - startTime
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          try {
+            await unlink(filePath)
+          } catch { }
+
+          resolve(
+            Response.json(
+              {
+                stdout: '',
+                stderr: message.slice(0, MAX_OUTPUT),
+                time,
+                status: 'error',
+              },
+              { status: 500 }
+            )
+          )
+        }
+      })()
+  })
 }
 
-async function executePython(code: string, input?: string): Promise<Response> {
-  const startTime = Date.now()
-  const fileId = randomBytes(8).toString('hex')
-  const fileName = `code-${fileId}.py`
-  const filePath = join(SANDBOX_DIR, fileName)
+function executePython(code: string, input?: string): Promise<Response> {
+  return new Promise((resolve) => {
+    const startTime = Date.now()
+    const fileId = randomBytes(8).toString('hex')
+    const fileName = `code-${fileId}.py`
+    const filePath = join(SANDBOX_DIR, fileName)
 
-  try {
-    await mkdir(SANDBOX_DIR, { recursive: true })
-    await writeFile(filePath, code, 'utf-8')
+      ; (async () => {
+        try {
+          await mkdir(SANDBOX_DIR, { recursive: true })
+          await writeFile(filePath, code, 'utf-8')
 
-    const { stdout, stderr } = await execPromise(
-      `docker run --rm -v ${SANDBOX_DIR}:/sandbox python:3.11-alpine python /sandbox/${fileName}`,
-      { 
-        timeout: TIMEOUT,
-        maxBuffer: MAX_OUTPUT,
-        ...(input && { input })
-      }
-    )
+          const docker = spawn('docker', [
+            'run',
+            '--rm',
+            '-i',
+            '-v',
+            `${SANDBOX_DIR}:/sandbox`,
+            'python:3.11-alpine',
+            'python',
+            `/sandbox/${fileName}`,
+          ])
 
-    const time = Date.now() - startTime
+          let stdout = ''
+          let stderr = ''
+          let timedOut = false
 
-    return Response.json({
-      stdout: stdout.slice(0, MAX_OUTPUT),
-      stderr: stderr.slice(0, MAX_OUTPUT),
-      time,
-      status: 'success',
-    })
-  } catch (error) {
-    const time = Date.now() - startTime
-    let stderr = ''
+          const timeout = setTimeout(() => {
+            timedOut = true
+            docker.kill()
+          }, TIMEOUT)
 
-    if (error instanceof Error) {
-      if (error.message.includes('timeout')) {
-        stderr = 'Execution timeout (10s limit)'
-      } else {
-        stderr = error.message
-      }
-    }
+          docker.stdout?.on('data', (data) => {
+            stdout += data.toString()
+            if (stdout.length > MAX_OUTPUT) {
+              stdout = stdout.slice(0, MAX_OUTPUT)
+            }
+          })
 
-    return Response.json({
-      stdout: '',
-      stderr: stderr.slice(0, MAX_OUTPUT),
-      time,
-      status: 'timeout' in (error || {}) ? 'timeout' : 'error',
-    })
-  } finally {
-    try {
-      await unlink(filePath)
-    } catch {}
-  }
+          docker.stderr?.on('data', (data) => {
+            stderr += data.toString()
+            if (stderr.length > MAX_OUTPUT) {
+              stderr = stderr.slice(0, MAX_OUTPUT)
+            }
+          })
+
+          docker.on('close', async (code) => {
+            clearTimeout(timeout)
+            const time = Date.now() - startTime
+
+            try {
+              await unlink(filePath)
+            } catch { }
+
+            resolve(
+              Response.json({
+                stdout,
+                stderr: timedOut ? 'Execution timeout (10s limit)' : stderr,
+                time,
+                status: timedOut ? 'timeout' : code === 0 ? 'success' : 'error',
+              })
+            )
+          })
+
+          // Write input to stdin
+          if (input) {
+            docker.stdin?.write(input)
+          }
+          docker.stdin?.end()
+        } catch (error) {
+          const time = Date.now() - startTime
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          try {
+            await unlink(filePath)
+          } catch { }
+
+          resolve(
+            Response.json(
+              {
+                stdout: '',
+                stderr: message.slice(0, MAX_OUTPUT),
+                time,
+                status: 'error',
+              },
+              { status: 500 }
+            )
+          )
+        }
+      })()
+  })
 }

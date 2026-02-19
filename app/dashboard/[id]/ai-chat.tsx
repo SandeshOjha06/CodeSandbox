@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useAI } from '@/hooks/useAI'
-import { Send, Trash2, X } from 'lucide-react'
+import { Send, Trash2, X, Sparkles } from 'lucide-react'
 
 interface AIChatProps {
   activeFileContent: string
@@ -29,7 +29,10 @@ export default function AIChat({
     <div className="w-80 bg-[#1e1e1e] border-l border-gray-800 flex flex-col h-full">
       {/* Header */}
       <div className="border-b border-gray-800 p-4 flex items-center justify-between bg-[#0a0a0a]">
-        <h3 className="text-sm font-semibold text-gray-200">AI Assistant</h3>
+        <div className="flex items-center gap-2">
+          <Sparkles size={16} className="text-blue-400" />
+          <h3 className="text-sm font-semibold text-gray-200">AI Assistant</h3>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={clearChat}

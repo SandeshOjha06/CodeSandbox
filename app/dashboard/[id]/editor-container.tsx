@@ -18,32 +18,33 @@ export default function EditorContainer({
 }: EditorContainerProps) {
   const [editorHeight, setEditorHeight] = useState(65)
   const [showGenerateDialog, setShowGenerateDialog] = useState(false)
+  const [generationTrigger, setGenerationTrigger] = useState(0)
+  const [stdin, setStdin] = useState('')
   const { logs, error, time, isRunning, run, clear } = useCodeExecution()
   const skipSaveRef = useRef(false)
 
-  // add input
- const handleRun = (input?: string) => {
-  run(activeFile.content, activeFile.language, input)
-}
+  const handleRun = () => {
+    run(activeFile.content, activeFile.language, stdin || undefined)
+  }
 
   const handleGenerateCode = (generatedCode: string) => {
-    // no backticks
-    if (generatedCode.includes('```')) {
-      console.error('Generated code still contains markdown!')
-      return
-    }
-    
+    // Strip markdown code blocks if present
+    const cleanCode = generatedCode.replace(/```(?:[\w-]+)?\n([\s\S]*?)```/g, '$1').trim()
+
     // Set flag to skip next auto-save
     skipSaveRef.current = true
-    
+
     // insert code
-    onContentChange(generatedCode)
-    
+    onContentChange(cleanCode)
+
+    // Force editor update
+    setGenerationTrigger(prev => prev + 1)
+
     // Reset flag after a short delay
     setTimeout(() => {
       skipSaveRef.current = false
     }, 100)
-    
+
     // Close dialog
     setShowGenerateDialog(false)
   }
@@ -63,6 +64,7 @@ export default function EditorContainer({
             isRunning={isRunning}
             onGenerateCode={() => setShowGenerateDialog(true)}
             skipSaveRef={skipSaveRef}
+            generationTrigger={generationTrigger}
           />
         </div>
 
@@ -81,6 +83,8 @@ export default function EditorContainer({
             isRunning={isRunning}
             onRun={handleRun}
             onClear={clear}
+            stdin={stdin}
+            onStdinChange={setStdin}
           />
         </div>
       </div>

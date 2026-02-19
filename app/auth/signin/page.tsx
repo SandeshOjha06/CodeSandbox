@@ -11,7 +11,7 @@ export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
-  
+
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [isGithubLoading, setIsGithubLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,12 +39,17 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Icon Watermark */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-[0.03] pointer-events-none select-none z-0">
+        <img src="/icon.svg" alt="" className="w-full h-full object-contain invert" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo/Header Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gray-800 mb-4">
-            <span className="text-gray-200 font-bold text-xl">&lt;/&gt;</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
+            <img src="/icon.svg" alt="Logo" className="w-full h-full object-contain invert" />
           </div>
           <h1 className="text-4xl font-bold text-gray-200 mb-2">
             Code Sandbox

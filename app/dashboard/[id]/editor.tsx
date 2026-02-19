@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from "react"
+import NextImage from "next/image"
 import Editor from "@monaco-editor/react"
 import { File } from "@/types/files"
 import { Play, Sparkles } from 'lucide-react'
@@ -8,32 +9,57 @@ import { Play, Sparkles } from 'lucide-react'
 interface CodeEditorProps {
   activeFile: File
   onContentChange: (newContent: string) => void
-  onRun?: (input?: string) => void
+  onRun?: () => void
   isRunning?: boolean
   onGenerateCode?: () => void
   skipSaveRef?: React.MutableRefObject<boolean>
+  generationTrigger?: number
 }
 
-export default function CodeEditor({ 
-  activeFile, 
+export default function CodeEditor({
+  activeFile,
   onContentChange,
   onRun,
   isRunning,
   onGenerateCode,
-  skipSaveRef
+  skipSaveRef,
+  generationTrigger = 0
 }: CodeEditorProps) {
   const [code, setCode] = useState(activeFile.content ?? "")
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
   const [language, setLanguage] = useState(activeFile.language ?? "javascript")
-  
+
   const [, startTransition] = useTransition()
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // Update code when activeFile changes
+  const prevFileIdRef = useRef<string | null>(null)
+
+  // Update code when generationTrigger changes (forced update from AI)
   useEffect(() => {
-    setCode(activeFile.content ?? "")
-    setLanguage(activeFile.language ?? "javascript")
-  }, [activeFile.id, activeFile.content])
+    if (generationTrigger > 0 && activeFile.content) {
+      setCode(activeFile.content)
+    }
+  }, [generationTrigger, activeFile.content])
+
+  // When file changes, reset everything
+  useEffect(() => {
+    // If file ID changed, we're switching files
+    if (prevFileIdRef.current !== activeFile.id) {
+      // Clear the save timeout to prevent old file from being saved
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+
+      // Reset status
+      setStatus("idle")
+
+      // Load new file content
+      setCode(activeFile.content ?? "")
+      setLanguage(activeFile.language ?? "javascript")
+
+      // Update ref
+      prevFileIdRef.current = activeFile.id
+    }
+  }, [activeFile.id])
 
   // Auto-save when code changes (debounced)
   useEffect(() => {
@@ -45,14 +71,14 @@ export default function CodeEditor({
     // Don't save if code hasn't actually changed
     if (code === activeFile.content) return
 
-    // CRITICAL: Don't save if code contains markdown backticks
+    // Don't save if code contains markdown backticks
     if (code.includes('```')) {
-      console.warn('⚠️ Code contains markdown - skipping save')
       return
     }
 
     setStatus("saving")
 
+    // Clear existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
     }
@@ -64,7 +90,14 @@ export default function CodeEditor({
         setTimeout(() => setStatus("idle"), 2000)
       })
     }, 900)
-  }, [code, activeFile.id, onContentChange, skipSaveRef])
+
+    // Cleanup on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [code, activeFile.id, activeFile.content, onContentChange, skipSaveRef])
 
   function changeLanguage(next: string) {
     if (next === language) return
@@ -73,7 +106,7 @@ export default function CodeEditor({
 
   const handleRun = () => {
     if (onRun) {
-      onRun()  // Run without input
+      onRun()
     }
   }
 
@@ -99,14 +132,16 @@ export default function CodeEditor({
             <button
               onClick={onGenerateCode}
               className="
-                flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600
-                text-gray-100 px-3 py-1.5 rounded-md text-xs font-medium
-                transition-colors duration-150
+                flex items-center gap-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#333] hover:border-[#444]
+                text-gray-300 hover:text-white px-3 py-1.5 rounded-md text-xs font-medium
+                transition-all duration-150 shadow-sm
               "
               title="Generate code with AI"
             >
-              <Sparkles size={14} />
-              Generate
+              <div className="relative w-3.5 h-3.5">
+                <NextImage src="/artificial-intelligence.svg" alt="AI" fill className="opacity-80 invert" />
+              </div>
+              <span>Generate</span>
             </button>
           )}
 

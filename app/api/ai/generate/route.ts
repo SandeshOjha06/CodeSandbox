@@ -30,7 +30,6 @@ IMPORTANT RULES:
             system: systemPrompt,
             prompt,
             temperature: 0.7,
-            maxTokens: 1000,
         })
 
         let cleanCode = text.trim()
@@ -46,7 +45,7 @@ IMPORTANT RULES:
 
         console.log('Cleaned code:', cleanCode)
 
-        return Response.json({ code: text })
+        return Response.json({ code: cleanCode })
     } catch (error) {
         console.error("Process failed: ", error);
         return Response.json(

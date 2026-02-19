@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, X, Loader } from 'lucide-react'
+import { Bot, X, Loader } from 'lucide-react'
 
 interface GenerateCodeDialogProps {
   isOpen: boolean
@@ -99,10 +99,10 @@ export default function GenerateCodeDialog({
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-[#1e1e1e] border border-gray-800 rounded-lg w-96 shadow-2xl">
         {/* HEADER */}
-        <div className="border-b border-gray-800 px-6 py-4 flex items-center justify-between bg-[#0a0a0a]">
+        <div className="border-b border-[#2b2b2b] px-6 py-4 flex items-center justify-between bg-[#181818]">
           <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-100">
+            <Bot size={18} className="text-[#007fd4]" />
+            <h2 className="text-sm font-semibold text-gray-100 uppercase tracking-wide">
               Generate Code
             </h2>
           </div>
@@ -110,8 +110,8 @@ export default function GenerateCodeDialog({
             onClick={onClose}
             disabled={isLoading}
             className="
-              p-1 hover:bg-gray-800 rounded-md transition-colors duration-150
-              text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed
+              p-1 hover:bg-[#2a2d2e] rounded-md transition-colors duration-150
+              text-gray-400 hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
             <X size={18} />
@@ -119,21 +119,21 @@ export default function GenerateCodeDialog({
         </div>
 
         {/* CONTENT */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 bg-[#1e1e1e]">
           {/* Prompt Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2">
-              What would you like to code?
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+              What would you like to build?
             </label>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g., Create a function that calculates factorial recursively..."
               className="
-                w-full bg-[#2a2a2a] text-gray-100 px-3 py-2.5 rounded-md
-                outline-none border border-gray-700 focus:border-gray-600
-                transition-colors duration-150 placeholder-gray-600
-                resize-none h-24 font-mono text-sm
+                w-full bg-[#3c3c3c] text-gray-100 px-3 py-2.5 rounded-sm
+                outline-none border border-[#3c3c3c] focus:border-[#007fd4]
+                transition-colors duration-150 placeholder-gray-500
+                resize-none h-24 font-mono text-sm leading-relaxed
               "
               disabled={isLoading}
               autoFocus
@@ -143,23 +143,24 @@ export default function GenerateCodeDialog({
                 }
               }}
             />
-            <p className="text-xs text-gray-600 mt-1">
-              Ctrl+Enter to generate
+            <p className="text-[10px] text-gray-500 mt-2 flex justify-between">
+              <span>Be specific for better results.</span>
+              <span>Ctrl+Enter to generate</span>
             </p>
           </div>
 
           {/* Language Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2">
-              Language
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+              Target Language
             </label>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               className="
-                w-full bg-[#2a2a2a] text-gray-100 px-3 py-2.5 rounded-md
-                outline-none border border-gray-700 focus:border-gray-600
-                transition-colors duration-150
+                w-full bg-[#3c3c3c] text-gray-100 px-3 py-2 rounded-sm
+                outline-none border border-[#3c3c3c] focus:border-[#007fd4]
+                transition-colors duration-150 text-sm appearance-none
               "
               disabled={isLoading}
             >
@@ -172,27 +173,21 @@ export default function GenerateCodeDialog({
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-900/20 border border-red-700/50 rounded-md p-3">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="bg-red-900/20 border border-red-700/50 rounded-sm p-3 flex gap-2 items-start">
+              <span className="text-red-400">⚠️</span>
+              <p className="text-red-400 text-xs font-mono">{error}</p>
             </div>
           )}
-
-          {/* Info Tip */}
-          <div className="bg-gray-900/50 border border-gray-700 rounded-md p-3">
-            <p className="text-gray-400 text-xs leading-relaxed">
-              💡 <strong>Tip:</strong> Be specific in your prompt for better results. Include details about what the code should do, expected inputs/outputs, and any special requirements.
-            </p>
-          </div>
         </div>
 
         {/* FOOTER */}
-        <div className="border-t border-gray-800 px-6 py-4 flex gap-3 bg-[#0a0a0a]">
+        <div className="border-t border-[#2b2b2b] px-6 py-4 flex gap-3 bg-[#181818] justify-end">
           <button
             onClick={onClose}
             disabled={isLoading}
             className="
-              flex-1 bg-gray-800 hover:bg-gray-700 disabled:opacity-50
-              text-gray-200 px-4 py-2.5 rounded-md text-sm font-medium
+              bg-transparent hover:bg-[#2a2d2e] disabled:opacity-50
+              text-gray-300 hover:text-white px-4 py-2 rounded-sm text-xs font-medium
               transition-colors duration-150 disabled:cursor-not-allowed
             "
           >
@@ -202,20 +197,20 @@ export default function GenerateCodeDialog({
             onClick={handleGenerate}
             disabled={isLoading || !prompt.trim()}
             className="
-              flex-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50
-              text-gray-100 px-4 py-2.5 rounded-md text-sm font-medium
+              bg-[#007fd4] hover:bg-[#026ec1] disabled:opacity-50
+              text-white px-4 py-2 rounded-sm text-xs font-medium
               transition-colors duration-150 disabled:cursor-not-allowed
-              flex items-center justify-center gap-2
+              flex items-center justify-center gap-2 min-w-[100px]
             "
           >
             {isLoading ? (
               <>
-                <Loader size={16} className="animate-spin" />
-                Generating...
+                <Loader size={14} className="animate-spin" />
+                Generating
               </>
             ) : (
               <>
-                <Sparkles size={16} />
+                <Bot size={16} />
                 Generate
               </>
             )}

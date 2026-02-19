@@ -25,9 +25,10 @@ export default function DeleteButton({ id }: { id: string }) {
     <button
       onClick={handleDelete}
       disabled={isPending}
-      className="rounded bg-red-900/30 hover:bg-red-900/50 border border-red-700/50 px-4 py-2 text-sm text-red-400 disabled:opacity-50 transition"
+      className="text-gray-400 hover:text-red-400 p-1.5 rounded-md hover:bg-red-900/20 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+      title="Delete Playground"
     >
-      Delete
+      <span className="text-xs font-medium">Delete</span>
     </button>
   )
 }
