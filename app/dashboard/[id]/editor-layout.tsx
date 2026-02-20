@@ -84,14 +84,14 @@ export default function EditorLayout({
               onClick={() => setShowGenerateDialog(true)}
               disabled={!activeFile}
               className="
-                flex items-center justify-center gap-2 bg-[#007fd4] hover:bg-[#026ec1]
-                text-white px-3 py-1.5 rounded-md text-xs font-medium
+                flex items-center justify-center gap-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#333] hover:border-[#444]
+                text-gray-300 hover:text-white px-3 py-1.5 rounded-md text-xs font-medium
                 transition-all duration-150 shadow-sm w-[200px] disabled:opacity-50 disabled:cursor-not-allowed
               "
               title="Generate code with AI"
             >
               <div className="relative w-3.5 h-3.5">
-                <NextImage src="/artificial-intelligence.svg" alt="AI" fill className="opacity-100 invert" />
+                <NextImage src="/artificial-intelligence.svg" alt="AI" fill className="opacity-80 invert" />
               </div>
               <span>Generate</span>
             </button>
