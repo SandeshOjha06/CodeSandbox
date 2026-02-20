@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CodeSandbox
+
+A powerful online code Sandbox supporting JavaScript and Python. Write, execute, and save your code instantly without any setup.
+
+## Features
+
+- **Instant Execution**: Run your code immediately with real-time output and error handling.
+- **Multiple Languages**: Write in JavaScript, Python, and more with proper syntax support.
+- **Save & Organize**: Automatically save and manage all your coding projects using a robust multi-directory system.
+- **AI Code Assistance**: Built-in AI code generation and assistance to help you code faster.
+- **Secure Authentication**: Secure user login and session management built into the platform.
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [Radix UI](https://www.radix-ui.com/)
+- **Editor**: [Monaco Editor](https://microsoft.github.io/monaco-editor/)
+- **Database**: [Neon Serverless Postgres](https://neon.tech/) with [Drizzle ORM](https://orm.drizzle.team/)
+- **Authentication**: [NextAuth.js](https://next-auth.js.org/)
+- **AI Integration**: [Vercel AI SDK](https://sdk.vercel.ai/)
 
 ## Getting Started
 
-First, run the development server:
+First, install the target dependencies:
+
+```bash
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the root directory and add the necessary environment variables based on `.env.example`:
+
+```bash
+DATABASE_URL=your_neon_db_url
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+GROQ_API_KEY=your_groq_api_key
+# Add other required API keys
+```
+
+### Database Setup
+
+Push the database schema to your Neon database via Drizzle:
+
+```bash
+npm run db:push
+# or to start local studio
+npm run db:studio
+```
+
+### Running the Development Server
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the app running.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The project can be deployed to Vercel or Render. Included in this repository are configuration files for Docker and Render (`render.yaml` and `Dockerfile.app`) specifically designed to simplify the deployment pipeline on Render.
