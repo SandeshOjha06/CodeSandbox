@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useFileExplorer } from '@/hooks/useFileExplorer'
 import { PlaygroundWithFiles } from '@/types/files'
 import Editor from './editor'
@@ -11,6 +11,8 @@ import EditorContainer from './editor-container'
 import AIChat from './ai-chat'
 import AIToggle from './ai-toggle'
 import UserMenu from './user-menu'
+import NextImage from 'next/image'
+import GenerateCodeDialog from './generate-code-dialog'
 
 interface EditorLayoutProps {
   playground: PlaygroundWithFiles
@@ -23,8 +25,35 @@ export default function EditorLayout({
 }: EditorLayoutProps) {
   const fileExplorer = useFileExplorer(playground, playgroundId)
   const [showAI, setShowAI] = useState(false)
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false)
+  const [generationTrigger, setGenerationTrigger] = useState(0)
   const activeFile = fileExplorer.activeFile
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const skipSaveRef = React.useRef(false)
+
+  const handleGenerateCode = (generatedCode: string) => {
+    if (!activeFile) return;
+
+    // Strip markdown code blocks if present
+    const cleanCode = generatedCode.replace(/```(?:[\w-]+)?\n([\s\S]*?)```/g, '$1').trim()
+
+    // Set flag to skip next auto-save
+    skipSaveRef.current = true
+
+    // insert code
+    fileExplorer.updateFileContent(activeFile.id, cleanCode)
+
+    // Force editor update
+    setGenerationTrigger(prev => prev + 1)
+
+    // Reset flag after a short delay
+    setTimeout(() => {
+      skipSaveRef.current = false
+    }, 100)
+
+    // Close dialog
+    setShowGenerateDialog(false)
+  }
 
   return (
     <div className="flex h-full gap-0">
@@ -43,10 +72,29 @@ export default function EditorLayout({
           <EditableTitle id={playgroundId} initialTitle={playground.title} />
 
           {/* Right: Actions */}
-          <div className="flex gap-2 items-center">
-            <AIToggle isOpen={showAI} onClick={() => setShowAI(!showAI)} />
-            <DeleteButton id={playgroundId} />
-            <UserMenu />
+          <div className="flex flex-col gap-2 items-end">
+            <div className="flex gap-2 items-center">
+              <AIToggle isOpen={showAI} onClick={() => setShowAI(!showAI)} />
+              <DeleteButton id={playgroundId} />
+              <UserMenu />
+            </div>
+
+            {/* Generate Code Button - Symmetrical below account info */}
+            <button
+              onClick={() => setShowGenerateDialog(true)}
+              disabled={!activeFile}
+              className="
+                flex items-center justify-center gap-2 bg-[#007fd4] hover:bg-[#026ec1]
+                text-white px-3 py-1.5 rounded-md text-xs font-medium
+                transition-all duration-150 shadow-sm w-[200px] disabled:opacity-50 disabled:cursor-not-allowed
+              "
+              title="Generate code with AI"
+            >
+              <div className="relative w-3.5 h-3.5">
+                <NextImage src="/artificial-intelligence.svg" alt="AI" fill className="opacity-100 invert" />
+              </div>
+              <span>Generate</span>
+            </button>
           </div>
         </div>
 
@@ -59,6 +107,8 @@ export default function EditorLayout({
               onContentChange={(newContent) =>
                 fileExplorer.updateFileContent(activeFile.id, newContent)
               }
+              generationTrigger={generationTrigger}
+              skipSaveRef={skipSaveRef}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500 bg-[#1e1e1e]">
@@ -94,6 +144,13 @@ export default function EditorLayout({
           </div>
         </footer>
       </div>
+      {/* Generate Code Dialog */}
+      <GenerateCodeDialog
+        isOpen={showGenerateDialog}
+        onClose={() => setShowGenerateDialog(false)}
+        onGenerate={handleGenerateCode}
+        currentLanguage={activeFile?.language || 'javascript'}
+      />
     </div>
   )
 }

@@ -126,59 +126,6 @@ export default function CodeEditor({
         </div>
 
         {/* Right: Action Buttons */}
-        <div className="flex gap-2">
-          {/* Generate Code Button */}
-          {onGenerateCode && (
-            <button
-              onClick={onGenerateCode}
-              className="
-                flex items-center gap-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#333] hover:border-[#444]
-                text-gray-300 hover:text-white px-3 py-1.5 rounded-md text-xs font-medium
-                transition-all duration-150 shadow-sm
-              "
-              title="Generate code with AI"
-            >
-              <div className="relative w-3.5 h-3.5">
-                <NextImage src="/artificial-intelligence.svg" alt="AI" fill className="opacity-80 invert" />
-              </div>
-              <span>Generate</span>
-            </button>
-          )}
-
-          {/* Run Button */}
-          {onRun && (
-            <button
-              onClick={handleRun}
-              disabled={isRunning}
-              className="
-                flex items-center gap-1 bg-gray-700 hover:bg-gray-600
-                disabled:opacity-50 text-gray-100 px-3 py-1.5 rounded-md
-                text-xs font-medium transition-colors duration-150
-              "
-              title="Run code"
-            >
-              <Play size={14} />
-              {isRunning ? 'Running...' : 'Run'}
-            </button>
-          )}
-
-          {/* Language Selector */}
-          <select
-            value={language}
-            onChange={(e) => changeLanguage(e.target.value)}
-            className="
-              bg-[#2a2a2a] text-sm text-gray-200 rounded-md px-3 py-1.5
-              border border-gray-700 focus:border-gray-600
-              transition-colors duration-150 cursor-pointer
-            "
-            title="Select programming language"
-          >
-            <option value="node">Node.js</option>
-            <option value="javascript">JavaScript</option>
-            <option value="typescript">TypeScript</option>
-            <option value="python">Python</option>
-          </select>
-        </div>
       </div>
 
       {/* EDITOR */}
